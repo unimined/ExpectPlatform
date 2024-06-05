@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     kotlin("jvm") version "1.9.22"
     `java-gradle-plugin`
@@ -5,7 +7,7 @@ plugins {
 }
 
 group = "xyz.wagyourtail.unimined.expect-platform"
-version = "1.0-SNAPSHOT"
+version = if (project.hasProperty("version_snapshot")) project.properties["version"] as String + "-SNAPSHOT" else project.properties["version"] as String
 
 base {
     archivesName.set("expect-platform")
@@ -19,6 +21,10 @@ java {
 
     withJavadocJar()
     withSourcesJar()
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 repositories {
@@ -76,6 +82,20 @@ gradlePlugin {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "WagYourMaven"
+            url = if (project.hasProperty("version_snapshot")) {
+                URI.create("https://maven.wagyourtail.xyz/snapshots/")
+            } else {
+                URI.create("https://maven.wagyourtail.xyz/releases/")
+            }
+            credentials {
+                username = project.findProperty("mvn.user") as String? ?: System.getenv("USERNAME")
+                password = project.findProperty("mvn.key") as String? ?: System.getenv("TOKEN")
+            }
+        }
+    }
     publications {
         create<MavenPublication>("mavenJava") {
             groupId = "xyz.wagyourtail.unimined.expect-platform"
