@@ -1,0 +1,108 @@
+import xyz.wagyourtail.unimined.expect.task.ExpectPlatformFiles
+import xyz.wagyourtail.unimined.expect.task.ExpectPlatformJar
+
+buildscript {
+    repositories {
+        mavenCentral()
+        flatDir {
+            dirs("../build/libs")
+        }
+    }
+    dependencies {
+        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0-SNAPSHOT"
+        classpath "org.ow2.asm:asm:9.7"
+    }
+}
+
+plugins {
+    id 'java'
+//    id 'xyz.wagyourtail.unimined.expect-platform'
+}
+
+apply plugin: 'xyz.wagyourtail.unimined.expect-platform'
+
+
+sourceSets {
+    a {
+        compileClasspath += sourceSets.main.output
+    }
+    b {
+        compileClasspath += sourceSets.main.output
+    }
+    c {
+        compileClasspath += sourceSets.main.output
+    }
+}
+
+repositories {
+    flatDir {
+        dirs "../build/libs"
+    }
+}
+
+dependencies {
+    implementation(expectPlatform.annotationsDep)
+}
+
+tasks.create("aExpectPlatform", ExpectPlatformFiles) {
+    platformName = "a"
+    inputCollection = sourceSets.main.output
+}
+
+tasks.create("bExpectPlatform", ExpectPlatformFiles) {
+    platformName = "b"
+    inputCollection = sourceSets.main.output
+}
+
+tasks.create("cExpectPlatform", ExpectPlatformFiles) {
+    platformName = "c"
+    inputCollection = sourceSets.main.output
+}
+
+tasks.register('runA', JavaExec) {
+    dependsOn(tasks.aExpectPlatform)
+    classpath = sourceSets.a.runtimeClasspath + tasks.aExpectPlatform.outputCollection
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+
+    System.out.println("classpath: " + classpath.files)
+}
+
+tasks.register('runB', JavaExec) {
+    dependsOn(tasks.bExpectPlatform)
+    classpath = sourceSets.b.runtimeClasspath + tasks.bExpectPlatform.outputCollection
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+}
+
+tasks.register('runC', JavaExec) {
+    dependsOn(tasks.cExpectPlatform)
+    classpath = sourceSets.c.runtimeClasspath + tasks.cExpectPlatform.outputCollection
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+}
+
+tasks.register('jarA', ExpectPlatformJar) {
+    platformName = "a"
+    inputFiles = sourceSets.main.output
+    from sourceSets.a.output
+    archiveFileName = "a.jar"
+}
+
+tasks.register('jarB', ExpectPlatformJar) {
+    platformName = "b"
+    inputFiles = sourceSets.main.output
+    from sourceSets.b.output
+    archiveFileName = "b.jar"
+}
+
+tasks.register('jarC', ExpectPlatformJar) {
+    platformName = "c"
+    inputFiles = sourceSets.main.output
+    from sourceSets.c.output
+    archiveFileName = "c.jar"
+}
+
+assemble.dependsOn(tasks.jarA)
+assemble.dependsOn(tasks.jarB)
+assemble.dependsOn(tasks.jarC)

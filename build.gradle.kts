@@ -1,21 +1,92 @@
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "1.9.22"
+    `java-gradle-plugin`
+    `maven-publish`
 }
 
-group = "xyz.wagyourtail.unimined"
+group = "xyz.wagyourtail.unimined.expect-platform"
 version = "1.0-SNAPSHOT"
+
+base {
+    archivesName.set("expect-platform")
+}
+
+val annotations by sourceSets.creating {}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
 }
 
+val asmVersion: String by project.properties
+
 dependencies {
+    implementation(gradleApi())
+    implementation("org.ow2.asm:asm:${asmVersion}")
+
     testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.jar {
+
+    manifest {
+        attributes(
+            "Manifest-Version" to "1.0",
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version,
+        )
+    }
+}
+
+val annotationJar = tasks.register<Jar>("annotationJar") {
+    archiveClassifier.set("annotations")
+    from(annotations.output)
+
+    manifest {
+        attributes(
+            "Manifest-Version" to "1.0",
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version,
+        )
+    }
+}
+
 kotlin {
     jvmToolchain(8)
+}
+
+gradlePlugin {
+    plugins {
+        create("simplePlugin") {
+            id = "xyz.wagyourtail.unimined.expect-platform"
+            implementationClass = "xyz.wagyourtail.unimined.expect.ExpectPlatformPlugin"
+        }
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            groupId = "xyz.wagyourtail.unimined.expect-platform"
+            artifactId = "expect-platform"
+            version = project.version.toString()
+
+            from(components["java"])
+
+            artifact(annotationJar) {
+                classifier = "annotations"
+            }
+        }
+    }
 }

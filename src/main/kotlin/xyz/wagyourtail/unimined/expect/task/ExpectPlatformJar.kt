@@ -1,73 +1,53 @@
 @file:Suppress("LeakingThis")
 
-package xyz.wagyourtail.jvmdg.gradle.task
+package xyz.wagyourtail.unimined.expect.task
 
 import org.gradle.api.file.FileCollection
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.*
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
-import xyz.wagyourtail.jvmdg.ClassDowngrader
-import xyz.wagyourtail.jvmdg.compile.ZipDowngrader
-import xyz.wagyourtail.jvmdg.gradle.flags.DowngradeFlags
-import xyz.wagyourtail.jvmdg.gradle.JVMDowngraderExtension
-import xyz.wagyourtail.jvmdg.gradle.flags.toFlags
-import xyz.wagyourtail.jvmdg.util.*
-import java.nio.file.StandardOpenOption
-import kotlin.io.path.outputStream
+import xyz.wagyourtail.jvmdg.util.FinalizeOnRead
+import xyz.wagyourtail.jvmdg.util.MustSet
+import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
+import xyz.wagyourtail.unimined.expect.TransformPlatform
+import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
+import xyz.wagyourtail.unimined.expect.utils.openZipFileSystem
 
-abstract class DowngradeJar : Jar(), DowngradeFlags {
+abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
 
-    private val jvmdg by lazy {
-        project.extensions.getByType(JVMDowngraderExtension::class.java)
+    private val ep by lazy {
+        project.extensions.getByType(ExpectPlatformExtension::class.java)
     }
 
     @get:InputFiles
-    @get:Optional
-    var classpath: FileCollection by FinalizeOnRead(LazyMutable {
-        project.extensions.getByType(SourceSetContainer::class.java).getByName("main").compileClasspath
-    })
-
-    @get:InputFile
-    abstract val inputFile: RegularFileProperty
-
-    init {
-        group = "JVMDowngrader"
-        description = "Downgrades the jar to the specified version"
-
-        downgradeTo.convention(jvmdg.downgradeTo).finalizeValueOnRead()
-        apiJar.convention(jvmdg.apiJar).finalizeValueOnRead()
-        quiet.convention(jvmdg.quiet).finalizeValueOnRead()
-        debug.convention(jvmdg.debug).finalizeValueOnRead()
-        debugSkipStubs.convention(jvmdg.debugSkipStubs).finalizeValueOnRead()
-
-    }
+    var inputFiles: FileCollection by FinalizeOnRead(MustSet())
 
     @TaskAction
     fun doDowngrade() {
-        val tempOutput = temporaryDir.resolve("downgradedInput.jar")
-        tempOutput.deleteIfExists()
+        for (input in inputFiles) {
+            if (input.isDirectory) {
+                val output = temporaryDir.resolve(input.name + "-expect-platform")
+                TransformPlatform.expectPlatform(input.toPath(), output.toPath(), platformName.get())
+                from(output)
+            } else if (input.extension == "jar") {
+                val output = temporaryDir.resolve(input.nameWithoutExtension + "-expect-platform." + input.extension)
+                input.toPath().openZipFileSystem().use { inputFs ->
+                    output.toPath().openZipFileSystem(mapOf("create" to true)).use { outputFs ->
+                        TransformPlatform.expectPlatform(
+                            inputFs.getPath("/"),
+                            outputFs.getPath("/"),
+                            platformName.get()
+                        )
+                    }
+                }
+                from(project.zipTree(output))
+            } else if (input.exists()) {
+                throw IllegalStateException("ExpectPlatformJar: $input is not a directory or jar file")
 
-        ClassDowngrader.downgradeTo(this.toFlags()).use {
-            ZipDowngrader.downgradeZip(
-                it,
-                inputFile.asFile.get().toPath(),
-                classpath.files.map { it.toURI().toURL() }.toSet(),
-                tempOutput.toPath()
-            )
+            }
         }
 
-        inputFile.asFile.get().toPath().readZipInputStreamFor("META-INF/MANIFEST.MF", false) { inp ->
-            // write to temp file
-            val inpTmp = temporaryDir.toPath().resolve("input-manifest.MF")
-            inpTmp.outputStream(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { out ->
-                inp.copyTo(out)
-            }
-            this.manifest {
-                it.from(inpTmp)
-            }
-        }
-
-        from(project.zipTree(tempOutput))
         copy()
     }
 
