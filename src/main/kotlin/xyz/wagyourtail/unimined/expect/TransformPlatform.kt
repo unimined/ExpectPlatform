@@ -24,16 +24,23 @@ class TransformPlatform(val platformName: String) {
             val output = outputRoot.resolve(inputRoot.relativize(path).toString())
             val reader = ClassReader(path.readBytes())
 
-            val node = ClassNode().also { reader.accept(it, 0) }
-            node.methods.forEach {
+            val classNode = ClassNode().also { reader.accept(it, 0) }
+            val epMethods = mutableMapOf<MethodNode, AnnotationNode>()
+            val poMethods = mutableMapOf<MethodNode, AnnotationNode>()
+            classNode.methods.forEach {
                 it.invisibleAnnotations?.forEach { annotation ->
                     if (annotation.desc == "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;") {
-                        expectPlatform(it, node, annotation)
+                        epMethods[it] = annotation
+                    } else if (annotation.desc == "Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;") {
+                        poMethods[it] = annotation
                     }
                 }
             }
 
-            val writer = ClassWriter(0).also { node.accept(it) }
+            epMethods.forEach { (method, annotation) -> expectPlatform(method, classNode, annotation) }
+            poMethods.forEach { (method, annotation) -> platformOnly(method, classNode, annotation) }
+
+            val writer = ClassWriter(0).also { classNode.accept(it) }
             output.createParentDirectories()
             output.writeBytes(writer.toByteArray())
         }
@@ -59,9 +66,9 @@ class TransformPlatform(val platformName: String) {
         }
 
         if(platformClass == null) {
-            val `package` = classNode.name.substringBeforeLast('/')
+            val packag = classNode.name.substringBeforeLast('/')
             val name = classNode.name.substringAfterLast('/')
-            platformClass = "$`package`/$platformName/${name}Impl"
+            platformClass = "$packag/$platformName/${name}Impl"
         }
 
         method.instructions.clear()
@@ -79,6 +86,15 @@ class TransformPlatform(val platformName: String) {
         method.instructions.add(InsnNode(type.returnType.getOpcode(Opcodes.IRETURN)))
 
         method.maxStack = -1
+    }
+
+    private fun platformOnly(method: MethodNode, classNode: ClassNode, annotation: AnnotationNode) {
+        @Suppress("UNCHECKED_CAST")
+        val platforms = annotation.values[1] as List<String>
+
+        if(platformName !in platforms) {
+            classNode.methods.remove(method)
+        }
     }
 
 }

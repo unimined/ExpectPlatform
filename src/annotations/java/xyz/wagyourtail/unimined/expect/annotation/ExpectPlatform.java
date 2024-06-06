@@ -26,4 +26,10 @@ public @interface ExpectPlatform {
         String target();
     }
 
+    // marker annotation for transformed methods
+    @Retention(RetentionPolicy.CLASS)
+    @Target(ElementType.METHOD)
+    @interface Transformed {
+    }
+
 }
