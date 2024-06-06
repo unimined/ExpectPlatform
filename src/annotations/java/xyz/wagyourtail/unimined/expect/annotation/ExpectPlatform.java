@@ -2,12 +2,13 @@ package xyz.wagyourtail.unimined.expect.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
  * Annotate public static methods to replace their contents with platform specific implementations.
  */
-@Retention(java.lang.annotation.RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface ExpectPlatform {
 
@@ -23,6 +24,12 @@ public @interface ExpectPlatform {
     @interface Platform {
         String name();
         String target();
+    }
+
+    // marker annotation for transformed methods
+    @Retention(RetentionPolicy.CLASS)
+    @Target(ElementType.METHOD)
+    @interface Transformed {
     }
 
 }

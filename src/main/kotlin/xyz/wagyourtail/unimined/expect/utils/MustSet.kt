@@ -1,4 +1,4 @@
-package xyz.wagyourtail.jvmdg.util
+package xyz.wagyourtail.unimined.expect.utils
 
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

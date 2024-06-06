@@ -1,129 +1,116 @@
 package xyz.wagyourtail.unimined.expect
 
 import org.objectweb.asm.*
+import org.objectweb.asm.tree.*
+import xyz.wagyourtail.unimined.expect.utils.toByteArray
 import java.nio.file.Path
 import kotlin.io.path.*
-import kotlin.math.max
 
-object TransformPlatform {
+
+class TransformPlatform(val platformName: String) {
 
     @OptIn(ExperimentalPathApi::class)
-    fun expectPlatform(inputRoot: Path, outputRoot: Path, platformName: String) {
+    fun transform(inputRoot: Path, outputRoot: Path) {
         for (path in inputRoot.walk()) {
             if (path.isDirectory()) {
                 outputRoot.resolve(inputRoot.relativize(path).toString()).createDirectories()
-            } else {
-                if (path.extension == "class") {
-                    val output = outputRoot.resolve(inputRoot.relativize(path).toString())
-                    val reader = ClassReader(path.readBytes())
-                    val writer = ClassWriter(reader, 0)
-                    lateinit var className: String
+                continue
+            }
 
-                    reader.accept(object : ClassVisitor(Opcodes.ASM9, writer) {
+            if (path.extension != "class") {
+                outputRoot.resolve(inputRoot.relativize(path).toString()).writeBytes(path.readBytes())
+                continue
+            }
 
-                        override fun visit(
-                            version: Int,
-                            access: Int,
-                            name: String,
-                            signature: String?,
-                            superName: String?,
-                            interfaces: Array<out String>?
-                        ) {
-                            super.visit(version, access, name, signature, superName, interfaces)
-                            className = name
-                        }
+            val output = outputRoot.resolve(inputRoot.relativize(path).toString())
 
-                        override fun visitMethod(
-                            access: Int,
-                            name: String,
-                            descriptor: String,
-                            signature: String?,
-                            exceptions: Array<out String>?
-                        ): MethodVisitor {
-                            var hasExpectPlatforms: Boolean = false
-                            var platformOverride: String? = null
-                            val superDelegate = super.visitMethod(access, name, descriptor, signature, exceptions)
+            val classNode = ClassNode().also { ClassReader(path.readBytes()).accept(it, 0) }
+            val epMethods = mutableMapOf<MethodNode, AnnotationNode>()
+            val poMethods = mutableMapOf<MethodNode, AnnotationNode>()
+            classNode.methods.forEach {
+                it.invisibleAnnotations?.forEach { annotation ->
+                    if (annotation.desc == "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;") {
+                        epMethods[it] = annotation
+                    } else if (annotation.desc == "Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;") {
+                        poMethods[it] = annotation
+                    }
+                }
+            }
 
-                            return object : MethodVisitor(api, superDelegate) {
-                                override fun visitAnnotation(descriptor: String?, visible: Boolean): AnnotationVisitor {
-                                    if (descriptor == "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;") {
-                                        hasExpectPlatforms = true
-                                        return object : AnnotationVisitor(api, super.visitAnnotation(descriptor, visible)) {
-                                            override fun visitArray(name: String?): AnnotationVisitor {
-                                                if (name == "platforms") {
-                                                    return object : AnnotationVisitor(api, super.visitArray(name)) {
-                                                        override fun visitAnnotation(
-                                                            name: String?,
-                                                            descriptor: String?
-                                                        ): AnnotationVisitor {
-                                                            return object : AnnotationVisitor(api, super.visitAnnotation(name, descriptor)) {
-                                                                var isPlatform = false
-                                                                var target: String? = null
+            epMethods.forEach { (method, annotation) -> expectPlatform(method, classNode, annotation) }
+            poMethods.forEach { (method, annotation) -> platformOnly(method, classNode, annotation) }
 
-                                                                override fun visit(name: String?, value: Any?) {
-                                                                    if (name == "name") {
-                                                                        if (value == platformName) {
-                                                                            isPlatform = true
-                                                                        }
-                                                                    } else if (name == "target") {
-                                                                        target = value as String
-                                                                    }
-                                                                    if (isPlatform && target != null) {
-                                                                        platformOverride = target
-                                                                    }
-                                                                    super.visit(name, value)
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                return super.visitArray(name)
-                                            }
-                                        }
-                                    }
-                                    return super.visitAnnotation(descriptor, visible)
-                                }
+            getCurrentTarget(classNode)
 
-                                override fun visitCode() {
-                                    super.visitCode()
-                                    if (hasExpectPlatforms) {
-                                        mv = null
-                                    }
-                                }
+            output.createParentDirectories()
+            output.writeBytes(classNode.toByteArray())
+        }
+    }
 
-                                override fun visitEnd() {
-                                    if (hasExpectPlatforms) {
-                                        if (access and Opcodes.ACC_STATIC == 0 || access and Opcodes.ACC_PUBLIC == 0) {
-                                            throw IllegalStateException("ExpectPlatform can only be applied to public static methods, found ${className};${name};${descriptor}")
-                                        }
-                                        val platformClassName = platformOverride ?: "${className.substringBeforeLast("/")}/${platformName}/${className.substringAfterLast("/")}Impl"
+    private fun expectPlatform(method: MethodNode, classNode: ClassNode, annotation: AnnotationNode) {
+        if ((method.access and Opcodes.ACC_PUBLIC) == 0 || (method.access and Opcodes.ACC_STATIC) == 0) {
+            error("Method annotated with @ExpectPlatform must be public static: ${classNode.name.replace('/', '.')}.${method.name}")
+        }
 
-                                        superDelegate.visitCode()
-                                        var i = 0
-                                        for (arg in Type.getArgumentTypes(descriptor)) {
-                                            superDelegate.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), i)
-                                            i += arg.size
-                                        }
-                                        superDelegate.visitMethodInsn(Opcodes.INVOKESTATIC, platformClassName, name, descriptor, false)
-                                        val returnType = Type.getReturnType(descriptor)
-                                        superDelegate.visitInsn(returnType.getOpcode(Opcodes.IRETURN))
-                                        superDelegate.visitMaxs(max(i, returnType.size), i)
-                                        superDelegate.visitEnd()
-                                    }
-                                }
+        @Suppress("UNCHECKED_CAST")
+        val platforms = annotation.values[1] as List<AnnotationNode>
 
-                            }
-                        }
-                    }, 0)
-                    output.createParentDirectories()
-                    output.writeBytes(writer.toByteArray())
-                } else {
-                    outputRoot.resolve(inputRoot.relativize(path).toString()).writeBytes(path.readBytes())
+        var platformClass: String? = null
+
+        for (platform in platforms) {
+            val name = platform.values[1] as String
+            val clazz = platform.values[3] as String
+            if(name == platformName) {
+                platformClass = clazz
+                break
+            }
+        }
+
+        if(platformClass == null) {
+            val packag = classNode.name.substringBeforeLast('/')
+            val name = classNode.name.substringAfterLast('/')
+            platformClass = "$packag/$platformName/${name}Impl"
+        }
+
+        method.instructions.clear()
+        val type: Type = Type.getMethodType(method.desc)
+
+        var stackIndex = 0
+        for (argumentType in type.argumentTypes) {
+            method.instructions.add(VarInsnNode(argumentType.getOpcode(Opcodes.ILOAD), stackIndex))
+            stackIndex += argumentType.size
+        }
+
+        method.instructions.add(
+            MethodInsnNode(Opcodes.INVOKESTATIC, platformClass, method.name, method.desc)
+        )
+        method.instructions.add(InsnNode(type.returnType.getOpcode(Opcodes.IRETURN)))
+
+        method.maxStack = -1
+    }
+
+    private fun platformOnly(method: MethodNode, classNode: ClassNode, annotation: AnnotationNode) {
+        @Suppress("UNCHECKED_CAST")
+        val platforms = annotation.values[1] as List<String>
+
+        if(platformName !in platforms) {
+            classNode.methods.remove(method)
+        }
+    }
+
+    private fun getCurrentTarget(node: ClassNode) {
+        // transform all calls to xyz.wagyourtail.unimined.expect.Target.getCurrentTarget() to return the current platform
+
+        for (method in node.methods) {
+            val instructions = method.instructions.iterator()
+            while (instructions.hasNext()) {
+                val insn = instructions.next()
+                if (insn is MethodInsnNode && insn.owner == "xyz/wagyourtail/unimined/expect/Target" && insn.name == "getCurrentTarget") {
+                    instructions.remove()
+                    instructions.add(LdcInsnNode(platformName))
                 }
             }
         }
     }
-
-
 
 }
