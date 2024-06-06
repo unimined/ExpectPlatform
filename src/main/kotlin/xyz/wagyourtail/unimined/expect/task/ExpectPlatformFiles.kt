@@ -5,8 +5,8 @@ import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import xyz.wagyourtail.jvmdg.util.FinalizeOnRead
-import xyz.wagyourtail.jvmdg.util.MustSet
+import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
+import xyz.wagyourtail.unimined.expect.utils.MustSet
 import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
 import xyz.wagyourtail.unimined.expect.TransformPlatform
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
@@ -46,8 +46,8 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
     }
 
     @TaskAction
-    fun doDowngrade() {
-        var toDowngrade = inputCollection.map { it.toPath() }.filter { it.exists() }
+    fun doTranform() {
+        var toTransform = inputCollection.map { it.toPath() }.filter { it.exists() }
 
         val fileSystems = mutableSetOf<FileSystem>()
 
@@ -55,7 +55,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
 
             outputs.files.forEach { it.deleteRecursively() }
 
-            val downgraded = toDowngrade.map { temporaryDir.resolve(it.name) }.map {
+            val transformed = toTransform.map { temporaryDir.resolve(it.name) }.map {
                 if (it.extension == "jar" || it.extension == "zip") {
                     val fs = it.toPath().openZipFileSystem(mapOf("create" to true))
                     fileSystems.add(fs)
@@ -63,16 +63,16 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
                 } else it.toPath()
             }
 
-            toDowngrade = toDowngrade.map {
+            toTransform = toTransform.map {
                 if (it.isDirectory()) it else run {
                     val fs = it.openZipFileSystem()
                     fileSystems.add(fs)
                     fs.getPath("/")
                 }
             }
-            for (i in toDowngrade.indices) {
-                val input = toDowngrade[i]
-                val output = downgraded[i]
+            for (i in toTransform.indices) {
+                val input = toTransform[i]
+                val output = transformed[i]
                 TransformPlatform(platformName.get()).transform(input, output)
             }
         } finally {

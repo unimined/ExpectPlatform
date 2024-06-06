@@ -6,8 +6,8 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
-import xyz.wagyourtail.jvmdg.util.FinalizeOnRead
-import xyz.wagyourtail.jvmdg.util.MustSet
+import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
+import xyz.wagyourtail.unimined.expect.utils.MustSet
 import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
 import xyz.wagyourtail.unimined.expect.TransformPlatform
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
@@ -23,7 +23,7 @@ abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
     var inputFiles: FileCollection by FinalizeOnRead(MustSet())
 
     @TaskAction
-    fun doDowngrade() {
+    fun doTransform() {
         for (input in inputFiles) {
             if (input.isDirectory) {
                 val output = temporaryDir.resolve(input.name + "-expect-platform")
