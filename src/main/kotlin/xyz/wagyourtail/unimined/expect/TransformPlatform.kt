@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.*
 import xyz.wagyourtail.unimined.expect.utils.toByteArray
 import java.nio.file.Path
 import kotlin.io.path.*
-
+import kotlin.math.max
 
 class TransformPlatform(val platformName: String) {
 
@@ -53,11 +53,11 @@ class TransformPlatform(val platformName: String) {
         }
 
         @Suppress("UNCHECKED_CAST")
-        val platforms = annotation.values[1] as List<AnnotationNode>
+        val platforms = annotation.values[1] as? List<AnnotationNode>
 
         var platformClass: String? = null
 
-        for (platform in platforms) {
+        for (platform in platforms ?: emptyList()) {
             val name = platform.values[1] as String
             val clazz = platform.values[3] as String
             if(name == platformName) {
@@ -86,7 +86,8 @@ class TransformPlatform(val platformName: String) {
         )
         method.instructions.add(InsnNode(type.returnType.getOpcode(Opcodes.IRETURN)))
 
-        method.maxStack = -1
+        method.maxStack = max(type.returnType.size, stackIndex)
+        method.maxLocals = stackIndex
     }
 
     private fun platformOnly(method: MethodNode, classNode: ClassNode, annotation: AnnotationNode) {
