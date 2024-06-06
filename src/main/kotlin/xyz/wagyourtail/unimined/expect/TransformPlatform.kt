@@ -2,6 +2,7 @@ package xyz.wagyourtail.unimined.expect
 
 import org.objectweb.asm.*
 import org.objectweb.asm.tree.*
+import xyz.wagyourtail.unimined.expect.utils.toByteArray
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -10,6 +11,7 @@ class TransformPlatform(val platformName: String) {
 
     @OptIn(ExperimentalPathApi::class)
     fun transform(inputRoot: Path, outputRoot: Path) {
+        var atLeastOneClassGenerated = false
         for (path in inputRoot.walk()) {
             if (path.isDirectory()) {
                 outputRoot.resolve(inputRoot.relativize(path).toString()).createDirectories()
@@ -22,9 +24,8 @@ class TransformPlatform(val platformName: String) {
             }
 
             val output = outputRoot.resolve(inputRoot.relativize(path).toString())
-            val reader = ClassReader(path.readBytes())
 
-            val classNode = ClassNode().also { reader.accept(it, 0) }
+            val classNode = ClassNode().also { ClassReader(path.readBytes()).accept(it, 0) }
             val epMethods = mutableMapOf<MethodNode, AnnotationNode>()
             val poMethods = mutableMapOf<MethodNode, AnnotationNode>()
             classNode.methods.forEach {
@@ -40,9 +41,16 @@ class TransformPlatform(val platformName: String) {
             epMethods.forEach { (method, annotation) -> expectPlatform(method, classNode, annotation) }
             poMethods.forEach { (method, annotation) -> platformOnly(method, classNode, annotation) }
 
-            val writer = ClassWriter(0).also { classNode.accept(it) }
+            val generatedClass = getCurrentTarget(classNode)
+            if (generatedClass != null && !atLeastOneClassGenerated) {
+                atLeastOneClassGenerated = true
+                val generatedOutput = outputRoot.resolve(generatedClass.name + ".class")
+                generatedOutput.createParentDirectories()
+                generatedOutput.writeBytes(generatedClass.toByteArray())
+            }
+
             output.createParentDirectories()
-            output.writeBytes(writer.toByteArray())
+            output.writeBytes(classNode.toByteArray())
         }
     }
 
@@ -94,6 +102,44 @@ class TransformPlatform(val platformName: String) {
 
         if(platformName !in platforms) {
             classNode.methods.remove(method)
+        }
+    }
+
+    private fun getCurrentTarget(node: ClassNode): ClassNode? {
+        // transform all calls to xyz.wagyourtail.unimined.expect.Target.getCurrentTarget() to return the current platform
+        var classNeedsGeneration = false
+
+        val generatedClassName = "expectplatform/Target${platformName.replaceFirstChar { it.uppercase() }}"
+
+        for (method in node.methods) {
+            for (insn in method.instructions) {
+                if (insn is MethodInsnNode && insn.owner == "xyz/wagyourtail/unimined/expect/Target" && insn.name == "getCurrentTarget") {
+                    classNeedsGeneration = true
+                    insn.owner = generatedClassName
+                    insn.name = "get"
+                }
+            }
+        }
+
+        if(!classNeedsGeneration) return null
+
+        return ClassNode().apply {
+            version = Opcodes.V1_8
+            access = Opcodes.ACC_PUBLIC or Opcodes.ACC_FINAL
+            name = generatedClassName
+            superName = "java/lang/Object"
+
+            methods.add(MethodNode().apply {
+                access = Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC
+                name = "get"
+                desc = "()Ljava/lang/String;"
+                signature = null
+                exceptions = null
+                instructions.add(LdcInsnNode(platformName))
+                instructions.add(InsnNode(Opcodes.ARETURN))
+                maxStack = 1
+                maxLocals = 0
+            })
         }
     }
 

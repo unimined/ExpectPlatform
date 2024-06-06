@@ -8,10 +8,9 @@ import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 
 abstract class ExpectPlatformExtension(val project: Project) {
     @get:Internal
-    val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0-SNAPSHOT"
+    val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
     val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:annotations"
-
 
     fun platform(platformName: String, configuration: Configuration) {
         val expectPlatformAttribute = Attribute.of("expectPlatform.${configuration.name}", Boolean::class.javaObjectType)

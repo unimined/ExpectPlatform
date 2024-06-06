@@ -2,10 +2,16 @@ package xyz.wagyourtail.ept;
 
 import xyz.wagyourtail.unimined.expect.annotation.ExpectPlatform;
 import xyz.wagyourtail.unimined.expect.annotation.PlatformOnly;
+import xyz.wagyourtail.unimined.expect.Target;
 
 public class Main {
 
     public static void main(String[] args) {
+        System.out.println("current platform: " + Target.getCurrentTarget());
+
+        Target.getCurrentTarget();
+        Target.getCurrentTarget();
+
         System.out.println(platformTest("test"));
 
         try {
