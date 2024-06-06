@@ -6,4 +6,7 @@ public class MainImpl {
         return "Hello b! " + name;
     }
 
+    public static String platformTest2(String name) {
+        return "Goodbye b! " + name;
+    }
 }

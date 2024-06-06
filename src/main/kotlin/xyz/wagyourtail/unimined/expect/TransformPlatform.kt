@@ -53,7 +53,7 @@ class TransformPlatform(val platformName: String) {
         }
 
         @Suppress("UNCHECKED_CAST")
-        val platforms = annotation.values[1] as? List<AnnotationNode>
+        val platforms = annotation.values?.get(1) as? List<AnnotationNode>
 
         var platformClass: String? = null
 

@@ -7,4 +7,8 @@ public class MainImpl {
         return "Hello a! " + name;
     }
 
+    public static String platformTest2(String name) {
+        return "Goodbye a! " + name;
+    }
+
 }

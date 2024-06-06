@@ -9,7 +9,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.0"
+        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.2"
         classpath "org.ow2.asm:asm-tree:9.7"
     }
 }
