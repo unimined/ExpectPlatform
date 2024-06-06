@@ -73,7 +73,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
             for (i in toDowngrade.indices) {
                 val input = toDowngrade[i]
                 val output = downgraded[i]
-                TransformPlatform.expectPlatform(input, output, platformName.get())
+                TransformPlatform(platformName.get()).transform(input, output)
             }
         } finally {
             fileSystems.forEach { it.close() }

@@ -9,8 +9,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0-SNAPSHOT"
-        classpath "org.ow2.asm:asm:9.7"
+        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.0"
+        classpath "org.ow2.asm:asm-tree:9.7"
     }
 }
 
@@ -44,17 +44,17 @@ dependencies {
     implementation(expectPlatform.annotationsDep)
 }
 
-tasks.create("aExpectPlatform", ExpectPlatformFiles) {
+tasks.register("aExpectPlatform", ExpectPlatformFiles) {
     platformName = "a"
     inputCollection = sourceSets.main.output
 }
 
-tasks.create("bExpectPlatform", ExpectPlatformFiles) {
+tasks.register("bExpectPlatform", ExpectPlatformFiles) {
     platformName = "b"
     inputCollection = sourceSets.main.output
 }
 
-tasks.create("cExpectPlatform", ExpectPlatformFiles) {
+tasks.register("cExpectPlatform", ExpectPlatformFiles) {
     platformName = "c"
     inputCollection = sourceSets.main.output
 }

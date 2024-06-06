@@ -35,7 +35,7 @@ val asmVersion: String by project.properties
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.ow2.asm:asm:${asmVersion}")
+    implementation("org.ow2.asm:asm-tree:${asmVersion}")
 
     testImplementation(kotlin("test"))
 }
@@ -66,6 +66,10 @@ val annotationJar = tasks.register<Jar>("annotationJar") {
             "Implementation-Version" to project.version,
         )
     }
+}
+
+tasks.assemble {
+    dependsOn(annotationJar)
 }
 
 kotlin {

@@ -3,7 +3,6 @@ package xyz.wagyourtail.unimined.expect
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
-import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Internal
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 
@@ -11,7 +10,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
     @get:Internal
     val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0-SNAPSHOT"
 
-    val annotationsDep = "xyz.wagyourtail.unimined:expect-platform:$version:annotations"
+    val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:annotations"
 
 
     fun platform(platformName: String, configuration: Configuration) {
