@@ -3,9 +3,12 @@ package xyz.wagyourtail.unimined.expect
 import groovy.lang.Closure
 import groovy.lang.DelegatesTo
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.JavaExec
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.process.JavaExecSpec
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
@@ -64,10 +67,10 @@ abstract class ExpectPlatformExtension(val project: Project) {
         }
     }
 
-//    @JvmOverloads
-//    fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
-//        spec.jvmArgs("-javaagent:${agentJar.absolutePath}", "-Dexpect.platform=${platformName}", "-Dexpect.remap=${TransformPlatform.mapToString(remap)}")
-//    }
+    @JvmOverloads
+    fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
+        spec.jvmArgs("-javaagent:${agentJar.absolutePath}", "-Dexpect.platform=${platformName}", "-Dexpect.remap=${TransformPlatform.mapToString(remap)}")
+    }
 
     val agentJar by lazy {
         val config = project.configurations.detachedConfiguration(project.dependencies.create(agentDep))

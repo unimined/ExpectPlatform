@@ -16,10 +16,13 @@ public class ExpectPlatformAgent {
 
 
     public static void premain(String args, Instrumentation inst) {
+        System.out.println("[ExpectPlatformAgent] Starting agent");
+        System.out.println("[ExpectPlatformAgent] Platform: " + platform);
+        System.out.println("[ExpectPlatformAgent] Remap: " + remap);
         if (platform == null) {
             throw new IllegalStateException("-D" + EXPECT_PLATFORM + " not set");
         }
-        inst.addTransformer(new ExpectPlatformTransformer());
+        inst.addTransformer(new ExpectPlatformTransformer(), inst.isRetransformClassesSupported());
     }
 
     public static void agentmain(String args, Instrumentation inst) {
@@ -35,7 +38,7 @@ public class ExpectPlatformAgent {
             ClassNode classNode = new ClassNode();
             reader.accept(classNode, 0);
 
-            transformPlatform.transform(classNode);
+            classNode = transformPlatform.transform(classNode);
 
             ClassWriter writer = new ClassWriter(reader, 0);
             classNode.accept(writer);

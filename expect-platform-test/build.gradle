@@ -9,7 +9,9 @@ buildscript {
         }
     }
     dependencies {
-        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.2"
+        classpath "xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.3"
+        classpath "org.ow2.asm:asm:9.7"
+        classpath "org.ow2.asm:asm-commons:9.7"
         classpath "org.ow2.asm:asm-tree:9.7"
     }
 }
@@ -87,7 +89,23 @@ tasks.register('runAgentA', JavaExec) {
     mainClass = 'xyz.wagyourtail.ept.Main'
     group = 'ept'
 
-    expectPlatform.insertAgent(delegate as JavaExecSpec, "a")
+    expectPlatform.insertAgent(delegate, "a")
+}
+
+tasks.register('runAgentB', JavaExec) {
+    classpath = sourceSets.b.runtimeClasspath + sourceSets.main.runtimeClasspath
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+
+    expectPlatform.insertAgent(delegate, "b")
+}
+
+tasks.register('runAgentC', JavaExec) {
+    classpath = sourceSets.c.runtimeClasspath + sourceSets.main.runtimeClasspath
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+
+    expectPlatform.insertAgent(delegate, "c")
 }
 
 tasks.register('jarA', ExpectPlatformJar) {

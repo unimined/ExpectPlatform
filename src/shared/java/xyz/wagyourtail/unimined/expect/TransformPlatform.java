@@ -175,7 +175,9 @@ public class TransformPlatform {
                 AbstractInsnNode insnNode = iterator.next();
                 if (insnNode.getOpcode() == Opcodes.INVOKESTATIC) {
                     MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
-                    if (methodInsnNode.owner.equals("xyz/wagyourtail/unimined/expect/Target") && methodInsnNode.name.equals("getCurrentTarget")) {
+                    if (methodInsnNode.owner.equals("xyz/wagyourtail/unimined/expect/Target") &&
+                        methodInsnNode.name.equals("getCurrentTarget")
+                    ) {
                         iterator.set(new LdcInsnNode(platformName));
                     }
                 }
@@ -196,7 +198,9 @@ public class TransformPlatform {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             sb.append(entry.getKey()).append(";=;").append(entry.getValue()).append(";|;");
         }
-        sb.setLength(sb.length() - 3);
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 3);
+        }
         return sb.toString();
     }
 
