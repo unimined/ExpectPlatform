@@ -151,8 +151,6 @@ publishing {
             artifactId = "expect-platform"
             version = project.version.toString()
 
-            from(components["java"])
-
             artifact(annotationJar) {
                 classifier = "annotations"
             }
