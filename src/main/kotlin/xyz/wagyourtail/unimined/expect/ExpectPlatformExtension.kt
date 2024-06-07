@@ -5,14 +5,14 @@ import groovy.lang.DelegatesTo
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
-import org.gradle.api.tasks.Internal
 import org.gradle.process.JavaExecSpec
+import org.jetbrains.annotations.VisibleForTesting
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 
 abstract class ExpectPlatformExtension(val project: Project) {
-    @get:Internal
-    @set:Internal
+
+    @set:VisibleForTesting
     var version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
     val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
