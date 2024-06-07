@@ -49,16 +49,34 @@ dependencies {
 tasks.register("aExpectPlatform", ExpectPlatformFiles) {
     platformName = "a"
     inputCollection = sourceSets.main.output
+
+    remap = [
+        "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/a/Env",
+        "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/a/Env\$EnvType",
+        "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType.COMBINED": "JOINED",
+    ]
 }
 
 tasks.register("bExpectPlatform", ExpectPlatformFiles) {
     platformName = "b"
     inputCollection = sourceSets.main.output
+
+    remap = [
+            "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/b/OnlyIn",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment.value": "env",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/b/OnlyIn\$Type",
+    ]
 }
 
 tasks.register("cExpectPlatform", ExpectPlatformFiles) {
     platformName = "c"
     inputCollection = sourceSets.main.output
+
+    remap = [
+            "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/c/Environment",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment.value": "type",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/c/Environment\$EnvType",
+    ]
 }
 
 tasks.register('runA', JavaExec) {
@@ -66,8 +84,6 @@ tasks.register('runA', JavaExec) {
     classpath = sourceSets.a.runtimeClasspath + tasks.aExpectPlatform.outputCollection
     mainClass = 'xyz.wagyourtail.ept.Main'
     group = 'ept'
-
-    System.out.println("classpath: " + classpath.files)
 }
 
 tasks.register('runB', JavaExec) {
@@ -89,7 +105,11 @@ tasks.register('runAgentA', JavaExec) {
     mainClass = 'xyz.wagyourtail.ept.Main'
     group = 'ept'
 
-    expectPlatform.insertAgent(delegate, "a")
+    expectPlatform.insertAgent(delegate, "a", [
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/a/Env",
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/a/Env\$EnvType",
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType.COMBINED": "JOINED",
+            ])
 }
 
 tasks.register('runAgentB', JavaExec) {
@@ -97,7 +117,11 @@ tasks.register('runAgentB', JavaExec) {
     mainClass = 'xyz.wagyourtail.ept.Main'
     group = 'ept'
 
-    expectPlatform.insertAgent(delegate, "b")
+    expectPlatform.insertAgent(delegate, "b", [
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/b/OnlyIn",
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment.value": "env",
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/b/OnlyIn\$Type",
+            ])
 }
 
 tasks.register('runAgentC', JavaExec) {
@@ -105,7 +129,11 @@ tasks.register('runAgentC', JavaExec) {
     mainClass = 'xyz.wagyourtail.ept.Main'
     group = 'ept'
 
-    expectPlatform.insertAgent(delegate, "c")
+    expectPlatform.insertAgent(delegate, "c", [
+                    "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/c/Environment",
+                    "xyz/wagyourtail/expect/unimined/annotation/Environment.value": "type",
+                    "xyz/wagyourtail/expect/unimined/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/c/Environment\$EnvType",
+            ])
 }
 
 tasks.register('jarA', ExpectPlatformJar) {
@@ -113,6 +141,12 @@ tasks.register('jarA', ExpectPlatformJar) {
     inputFiles = sourceSets.main.output
     from sourceSets.a.output
     archiveFileName = "a.jar"
+
+    remap = [
+            "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/a/Env",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/a/Env\$EnvType",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType.COMBINED": "JOINED",
+    ]
 }
 
 tasks.register('jarB', ExpectPlatformJar) {
@@ -120,6 +154,12 @@ tasks.register('jarB', ExpectPlatformJar) {
     inputFiles = sourceSets.main.output
     from sourceSets.b.output
     archiveFileName = "b.jar"
+
+    remap = [
+            "xyz/wagyourtail/unimined/expect/annotation/Environment": "xyz/wagyourtail/ept/b/OnlyIn",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment.value": "env",
+            "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/b/OnlyIn\$Type",
+    ]
 }
 
 tasks.register('jarC', ExpectPlatformJar) {
@@ -127,6 +167,12 @@ tasks.register('jarC', ExpectPlatformJar) {
     inputFiles = sourceSets.main.output
     from sourceSets.c.output
     archiveFileName = "c.jar"
+
+    remap = [
+            "xyz/wagyourtail/expect/unimined/annotation/Environment": "xyz/wagyourtail/ept/c/Environment",
+            "xyz/wagyourtail/expect/unimined/annotation/Environment.value": "type",
+            "xyz/wagyourtail/expect/unimined/annotation/Environment\$EnvType": "xyz/wagyourtail/ept/c/Environment\$EnvType",
+    ]
 }
 
 assemble.dependsOn(tasks.jarA)

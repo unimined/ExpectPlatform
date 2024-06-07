@@ -28,6 +28,10 @@ public class TransformPlatform {
         remap.putAll(map);
     }
 
+    public Map<String, String> getRemap() {
+        return remap;
+    }
+
     public void transform(Path inputRoot, Path outputRoot) throws IOException {
         try (Stream<Path> files = Files.walk(inputRoot)) {
             files.parallel().forEach(path -> {
@@ -60,7 +64,7 @@ public class TransformPlatform {
         Map<MethodNode, AnnotationNode> platformOnly = new HashMap<>();
 
         ClassNode target = new ClassNode();
-        ClassRemapper remapper = new ClassRemapper(target, new SimpleRemapper(remap));
+        ClassRemapper remapper = new BetterClassRemapper(target, new SimpleRemapper(remap));
         classNode.accept(remapper);
 
         classNode = target;

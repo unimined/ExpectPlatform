@@ -1,5 +1,6 @@
 package xyz.wagyourtail.ept;
 
+import xyz.wagyourtail.unimined.expect.annotation.Environment;
 import xyz.wagyourtail.unimined.expect.annotation.ExpectPlatform;
 import xyz.wagyourtail.unimined.expect.annotation.PlatformOnly;
 import xyz.wagyourtail.unimined.expect.Target;
@@ -18,6 +19,8 @@ public class Main {
         try {
             Main.class.getDeclaredMethod("platformOnlyTest");
             System.out.println("platformOnlyTest exists");
+
+            environmentCheck(Main.class.getDeclaredMethod("clientTest").getAnnotation(Environment.class));
         } catch (NoSuchMethodException e) {
             System.out.println("platformOnlyTest does not exist");
         }
@@ -41,5 +44,14 @@ public class Main {
 
     @PlatformOnly({"a", "b"})
     public static void platformOnlyTest() {
+    }
+
+    @Environment(Environment.EnvType.COMBINED)
+    public static void clientTest() {
+    }
+
+    @ExpectPlatform
+    public static void environmentCheck(Environment env) {
+        throw new AssertionError();
     }
 }
