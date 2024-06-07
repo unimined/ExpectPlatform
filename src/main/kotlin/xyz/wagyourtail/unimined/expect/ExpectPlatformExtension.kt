@@ -17,8 +17,8 @@ abstract class ExpectPlatformExtension(val project: Project) {
     @get:Internal
     val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
-    val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:annotations"
-    val agentDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:agent"
+    val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version"
+    val agentDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version"
 
     @JvmOverloads
     fun platform(platformName: String, configuration: Configuration, action: ExpectPlatformParams.() -> Unit = {}) {

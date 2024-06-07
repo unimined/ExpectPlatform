@@ -146,18 +146,20 @@ publishing {
         }
     }
     publications {
-        create<MavenPublication>("mavenJava") {
+        create<MavenPublication>("agent") {
             groupId = "xyz.wagyourtail.unimined.expect-platform"
-            artifactId = "expect-platform"
+            artifactId = "expect-platform-agent"
             version = project.version.toString()
 
-            artifact(annotationJar) {
-                classifier = "annotations"
-            }
+            artifact(agentShadeJar) {}
+        }
 
-            artifact(agentShadeJar) {
-                classifier = "agent"
-            }
+        create<MavenPublication>("annotations") {
+            groupId = "xyz.wagyourtail.unimined.expect-platform"
+            artifactId = "expect-platform-annotations"
+            version = project.version.toString()
+
+            artifact(annotationJar) {}
         }
     }
 }
