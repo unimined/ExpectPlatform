@@ -31,6 +31,11 @@ sourceSets.main {
     runtimeClasspath += shared.output
 }
 
+sourceSets.test {
+    compileClasspath += shared.output
+    runtimeClasspath += shared.output
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
@@ -80,7 +85,7 @@ tasks.jar {
 }
 
 val annotationJar = tasks.register<Jar>("annotationJar") {
-    archiveClassifier.set("annotations")
+    archiveBaseName.set("expect-platform-annotations")
     from(annotations.output)
 
     manifest {
@@ -93,7 +98,8 @@ val annotationJar = tasks.register<Jar>("annotationJar") {
 }
 
 val agentShadeJar = tasks.register<ShadowJar>("agentShadowJar") {
-    archiveClassifier.set("agent")
+    archiveBaseName.set("expect-platform-agent")
+
     from(agent.output, shared.output)
 
     shadowContents.add(shade)

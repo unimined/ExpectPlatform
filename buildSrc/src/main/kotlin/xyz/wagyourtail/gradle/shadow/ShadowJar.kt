@@ -25,7 +25,6 @@ abstract class ShadowJar : Jar() {
 
         shadowContents.convention(mutableListOf()).finalizeValueOnRead()
         relocatePackages.convention(mutableMapOf()).finalizeValueOnRead()
-        archiveClassifier.convention("all")
     }
 
     fun relocate(from: String, to: String) {

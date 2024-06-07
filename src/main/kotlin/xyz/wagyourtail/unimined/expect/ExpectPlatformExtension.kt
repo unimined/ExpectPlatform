@@ -3,22 +3,20 @@ package xyz.wagyourtail.unimined.expect
 import groovy.lang.Closure
 import groovy.lang.DelegatesTo
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.JavaExec
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.process.JavaExecSpec
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 
 abstract class ExpectPlatformExtension(val project: Project) {
     @get:Internal
-    val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
+    @set:Internal
+    var version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
-    val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version"
-    val agentDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version"
+    val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
+    val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version" }
 
     @JvmOverloads
     fun platform(platformName: String, configuration: Configuration, action: ExpectPlatformParams.() -> Unit = {}) {
