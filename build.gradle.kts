@@ -1,3 +1,4 @@
+import xyz.wagyourtail.gradle.shadow.ShadowJar
 import java.net.URI
 
 plugins {
@@ -14,6 +15,21 @@ base {
 }
 
 val annotations by sourceSets.creating {}
+
+val shared by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath
+}
+
+val agent by sourceSets.creating {
+    compileClasspath += shared.output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += shared.output + sourceSets.main.get().runtimeClasspath
+}
+
+sourceSets.main {
+    compileClasspath += shared.output
+    runtimeClasspath += shared.output
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -33,9 +49,16 @@ repositories {
 
 val asmVersion: String by project.properties
 
+val shade by configurations.creating {
+    configurations.implementation.get().extendsFrom(this)
+}
+
 dependencies {
     implementation(gradleApi())
-    implementation("org.ow2.asm:asm-tree:${asmVersion}")
+
+    shade("org.ow2.asm:asm:${asmVersion}")
+    shade("org.ow2.asm:asm-commons:${asmVersion}")
+    shade("org.ow2.asm:asm-tree:${asmVersion}")
 
     testImplementation(kotlin("test"))
 }
@@ -45,6 +68,7 @@ tasks.test {
 }
 
 tasks.jar {
+    from(shared.output)
 
     manifest {
         attributes(
@@ -68,8 +92,29 @@ val annotationJar = tasks.register<Jar>("annotationJar") {
     }
 }
 
+val agentShadeJar = tasks.register<ShadowJar>("agentShadowJar") {
+    archiveClassifier.set("agent")
+    from(agent.output, shared.output)
+
+    shadowContents.add(shade)
+    exclude("module-info.class")
+
+    relocate("org.objectweb.asm", "xyz.wagyourtail.unimined.expect.asm")
+
+    manifest {
+        attributes(
+            "Manifest-Version" to "1.0",
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version,
+            "Premain-Class" to "xyz.wagyourtail.unimined.expect.ExpectPlatformAgent",
+            "Can-Redefine-Classes" to "true",
+        )
+    }
+}
+
 tasks.assemble {
     dependsOn(annotationJar)
+    dependsOn(agentShadeJar)
 }
 
 kotlin {
@@ -110,6 +155,10 @@ publishing {
 
             artifact(annotationJar) {
                 classifier = "annotations"
+            }
+
+            artifact(agentShadeJar) {
+                classifier = "agent"
             }
         }
     }

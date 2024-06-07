@@ -1,9 +1,13 @@
 package xyz.wagyourtail.unimined.expect
 
+import groovy.lang.Closure
+import groovy.lang.DelegatesTo
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.tasks.Internal
+import org.gradle.process.JavaExecSpec
+import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 
 abstract class ExpectPlatformExtension(val project: Project) {
@@ -11,8 +15,10 @@ abstract class ExpectPlatformExtension(val project: Project) {
     val version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
     val annotationsDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:annotations"
+    val agentDep = "xyz.wagyourtail.unimined.expect-platform:expect-platform:$version:agent"
 
-    fun platform(platformName: String, configuration: Configuration) {
+    @JvmOverloads
+    fun platform(platformName: String, configuration: Configuration, action: ExpectPlatformParams.() -> Unit = {}) {
         val expectPlatformAttribute = Attribute.of("expectPlatform.${configuration.name}", Boolean::class.javaObjectType)
 
         project.dependencies.apply {
@@ -33,6 +39,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
                 spec.parameters {
                     it.platformName.set(platformName)
+                    it.action()
                 }
             }
         }
@@ -40,6 +47,31 @@ abstract class ExpectPlatformExtension(val project: Project) {
         configuration.attributes {
             it.attribute(expectPlatformAttribute, true)
         }
+    }
+
+    fun platform(
+        platformName: String,
+        configuration: Configuration,
+        @DelegatesTo(
+            ExpectPlatformParams::class,
+            strategy = Closure.DELEGATE_FIRST
+        ) action: Closure<*>
+    ) {
+        platform(platformName, configuration) {
+            action.delegate = this
+            action.resolveStrategy = Closure.DELEGATE_FIRST
+            action.call()
+        }
+    }
+
+//    @JvmOverloads
+//    fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
+//        spec.jvmArgs("-javaagent:${agentJar.absolutePath}", "-Dexpect.platform=${platformName}", "-Dexpect.remap=${TransformPlatform.mapToString(remap)}")
+//    }
+
+    val agentJar by lazy {
+        val config = project.configurations.detachedConfiguration(project.dependencies.create(agentDep))
+        config.resolve().first { it.extension == "jar" }
     }
 
 }

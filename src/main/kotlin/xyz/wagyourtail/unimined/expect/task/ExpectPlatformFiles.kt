@@ -73,7 +73,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
             for (i in toTransform.indices) {
                 val input = toTransform[i]
                 val output = transformed[i]
-                TransformPlatform(platformName.get()).transform(input, output)
+                TransformPlatform(platformName.get(), remap.get()).transform(input, output)
             }
         } finally {
             fileSystems.forEach { it.close() }

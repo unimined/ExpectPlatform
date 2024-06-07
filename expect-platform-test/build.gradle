@@ -82,6 +82,14 @@ tasks.register('runC', JavaExec) {
     group = 'ept'
 }
 
+tasks.register('runAgentA', JavaExec) {
+    classpath = sourceSets.a.runtimeClasspath + sourceSets.main.runtimeClasspath
+    mainClass = 'xyz.wagyourtail.ept.Main'
+    group = 'ept'
+
+    expectPlatform.insertAgent(delegate as JavaExecSpec, "a")
+}
+
 tasks.register('jarA', ExpectPlatformJar) {
     platformName = "a"
     inputFiles = sourceSets.main.output

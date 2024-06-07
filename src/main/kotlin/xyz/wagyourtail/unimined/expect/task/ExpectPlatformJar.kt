@@ -27,13 +27,13 @@ abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
         for (input in inputFiles) {
             if (input.isDirectory) {
                 val output = temporaryDir.resolve(input.name + "-expect-platform")
-                TransformPlatform(platformName.get()).transform(input.toPath(), output.toPath())
+                TransformPlatform(platformName.get(), remap.get()).transform(input.toPath(), output.toPath())
                 from(output)
             } else if (input.extension == "jar") {
                 val output = temporaryDir.resolve(input.nameWithoutExtension + "-expect-platform." + input.extension)
                 input.toPath().openZipFileSystem().use { inputFs ->
                     output.toPath().openZipFileSystem(mapOf("create" to true)).use { outputFs ->
-                        TransformPlatform(platformName.get()).transform(
+                        TransformPlatform(platformName.get(), remap.get()).transform(
                             inputFs.getPath("/"),
                             outputFs.getPath("/")
                         )
