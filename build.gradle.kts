@@ -100,7 +100,7 @@ val annotationJar = tasks.register<Jar>("annotationJar") {
 }
 
 val annotationSources = tasks.register<Jar>("annotationSources") {
-    archiveBaseName.set("expect-platform-annotations-sources")
+    archiveBaseName.set("expect-platform-annotations")
     archiveClassifier.set("sources")
     from(annotations.allSource)
 }
