@@ -24,7 +24,7 @@ pluginManagement {
 and then add the plugin to your `build.gradle` file:
 ```gradle
 plugins {
-    id 'xyz.wagyourtail.unimined.expect-platform' version '1.0.3'
+    id 'xyz.wagyourtail.unimined.expect-platform' version '1.0.4'
 }
 ```
 
@@ -68,7 +68,7 @@ tasks.create("PlatformJar", xyz.wagyourtail.unimined.expect.ExpectPlatformJar) {
 
 ```
 
-if you need the agent on a runner that isn't implementing JavaExecSpec (ie, the one in unimined)
+if you need the agent on a runner that isn't implementing JavaExecSpec (i.e. the one in unimined 1.2)
 check [the implementation](src/main/kotlin/xyz/wagyourtail/unimined/expect/ExpectPlatformExtension.kt#L69) for how it actually applies the agent to a JavaExec task.
 
 ### Environment
