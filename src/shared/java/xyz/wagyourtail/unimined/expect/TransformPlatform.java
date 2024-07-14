@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class TransformPlatform {
+    private static final int EXPECT_PLATFORM_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
+
     private final String platformName;
     private final Map<String, String> remap = new HashMap<>();
 
@@ -95,14 +97,15 @@ public class TransformPlatform {
     }
 
     private void expectPlatform(MethodNode methodNode, ClassNode classNode, AnnotationNode annotationNode) {
-        if (((methodNode.access & Opcodes.ACC_PUBLIC) == 0) || ((methodNode.access & Opcodes.ACC_STATIC) == 0)) {
+        if ((methodNode.access & EXPECT_PLATFORM_ACCESS) != EXPECT_PLATFORM_ACCESS) {
             throw new RuntimeException("ExpectPlatform methods must be public and static");
         }
 
 
         String platformClass = null;
-        if (annotationNode.values != null) {
-            for (AnnotationNode platform : (List<AnnotationNode>) annotationNode.values.get(1)) {
+        List<AnnotationNode> platforms = getAnnotationValue(annotationNode, "platforms");
+        if (platforms != null) {
+            for (AnnotationNode platform : platforms) {
                 String name = null;
                 String target = null;
                 for (int i = 0; i < platform.values.size(); i += 2) {
@@ -114,8 +117,7 @@ public class TransformPlatform {
                         target = (String) value;
                     }
                 }
-                assert name != null;
-                if (name.equals(platformName)) {
+                if (platformName.equals(name) && target != null) {
                     platformClass = target;
                     break;
                 }
@@ -163,9 +165,9 @@ public class TransformPlatform {
     }
 
     private void platformOnly(MethodNode methodNode, ClassNode classNode, AnnotationNode annotationNode) {
-        List<String> platforms = (List<String>) annotationNode.values.get(1);
+        List<String> platforms = getAnnotationValue(annotationNode, "value");
 
-        if (!platforms.contains(platformName)) {
+        if (platforms != null && !platforms.contains(platformName)) {
             classNode.methods.remove(methodNode);
         }
     }
@@ -206,6 +208,17 @@ public class TransformPlatform {
             sb.setLength(sb.length() - 3);
         }
         return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getAnnotationValue(AnnotationNode annotation, String key) {
+        if(annotation.values == null) return null;
+        for (int i = 0; i < annotation.values.size(); i += 2) {
+            if (annotation.values.get(i).equals(key)) {
+                return (T) annotation.values.get(i + 1);
+            }
+        }
+        return null;
     }
 
 }
