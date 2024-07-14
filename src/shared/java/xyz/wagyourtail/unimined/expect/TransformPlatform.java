@@ -43,13 +43,18 @@ public class TransformPlatform {
                     if (parent != null) {
                         Files.createDirectories(outputRoot.resolve(inputRoot.relativize(parent).toString()));
                     }
+                    Path output = outputRoot.resolve(inputRoot.relativize(path).toString());
+
+                    if (!path.toString().endsWith(".class")) {
+                        Files.copy(path, output, StandardCopyOption.REPLACE_EXISTING);
+                        return;
+                    }
                     ClassReader reader = new ClassReader(Files.newInputStream(path));
                     ClassNode classNode = new ClassNode();
                     reader.accept(classNode, 0);
 
                     classNode = transform(classNode);
 
-                    Path output = outputRoot.resolve(inputRoot.relativize(path).toString());
                     ClassWriter writer = new ClassWriter(reader, 0);
                     classNode.accept(writer);
 
