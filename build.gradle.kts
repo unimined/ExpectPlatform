@@ -1,3 +1,5 @@
+@file:Suppress("HasPlatformType")
+
 import xyz.wagyourtail.gradle.shadow.ShadowJar
 import java.net.URI
 
@@ -14,7 +16,7 @@ base {
     archivesName.set("expect-platform")
 }
 
-val annotations by sourceSets.creating {}
+val annotations by sourceSets.creating
 
 val shared by sourceSets.creating {
     compileClasspath += sourceSets.main.get().compileClasspath
@@ -97,6 +99,12 @@ val annotationJar = tasks.register<Jar>("annotationJar") {
     }
 }
 
+val annotationSources = tasks.register<Jar>("annotationSources") {
+    archiveBaseName.set("expect-platform-annotations-sources")
+    archiveClassifier.set("sources")
+    from(annotations.allSource)
+}
+
 val agentShadeJar = tasks.register<ShadowJar>("agentShadowJar") {
     archiveBaseName.set("expect-platform-agent")
 
@@ -157,7 +165,7 @@ publishing {
             artifactId = "expect-platform-agent"
             version = project.version.toString()
 
-            artifact(agentShadeJar) {}
+            artifact(agentShadeJar)
         }
 
         create<MavenPublication>("annotations") {
@@ -165,7 +173,8 @@ publishing {
             artifactId = "expect-platform-annotations"
             version = project.version.toString()
 
-            artifact(annotationJar) {}
+            artifact(annotationJar)
+            artifact(annotationSources)
         }
     }
 }

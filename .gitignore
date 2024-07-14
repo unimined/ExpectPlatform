@@ -7,6 +7,7 @@ build/
 ### IntelliJ IDEA ###
 .idea/
 out/
+*.iml
 !**/src/main/**/out/
 !**/src/test/**/out/
 
