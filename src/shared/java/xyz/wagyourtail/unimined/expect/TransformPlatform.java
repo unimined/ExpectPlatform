@@ -18,15 +18,18 @@ public class TransformPlatform {
     private static final int EXPECT_PLATFORM_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
 
     private final String platformName;
+    private final boolean stripAnnotations;
     private final Map<String, String> remap = new HashMap<>();
 
-    public TransformPlatform(String platformName, String map) {
+    public TransformPlatform(String platformName, String map, boolean stripAnnotations) {
         this.platformName = platformName;
+        this.stripAnnotations = stripAnnotations;
         stringMapParser(map);
     }
 
-    public TransformPlatform(String platformName, Map<String, String> map) {
+    public TransformPlatform(String platformName, Map<String, String> map, boolean stripAnnotations) {
         this.platformName = platformName;
+        this.stripAnnotations = stripAnnotations;
         remap.putAll(map);
     }
 
@@ -90,10 +93,16 @@ public class TransformPlatform {
 
         for (Map.Entry<MethodNode, AnnotationNode> entry : expectPlatform.entrySet()) {
             expectPlatform(entry.getKey(), classNode, entry.getValue());
+            if (stripAnnotations) {
+                classNode.invisibleAnnotations.remove(entry.getValue());
+            }
         }
 
         for (Map.Entry<MethodNode, AnnotationNode> entry : platformOnly.entrySet()) {
             platformOnly(entry.getKey(), classNode, entry.getValue());
+            if (stripAnnotations) {
+                classNode.invisibleAnnotations.remove(entry.getValue());
+            }
         }
 
         getCurrentTarget(classNode);
@@ -130,13 +139,8 @@ public class TransformPlatform {
         }
         if (platformClass == null) {
             int lastSlash = classNode.name.lastIndexOf('/');
-            String pkg;
-            if (lastSlash == -1) {
-                pkg = "";
-            } else {
-                pkg = classNode.name.substring(0, lastSlash);
-            }
-            String className = classNode.name.substring(lastSlash + 1);
+            String pkg = lastSlash == -1 ? "" : classNode.name.substring(0, lastSlash);
+			String className = classNode.name.substring(lastSlash + 1);
             if (pkg.isEmpty()) {
                 platformClass = platformName + "/" + className + "Impl";
             } else {

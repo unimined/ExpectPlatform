@@ -46,7 +46,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
     }
 
     @TaskAction
-    fun doTranform() {
+    fun doTransform() {
         var toTransform = inputCollection.map { it.toPath() }.filter { it.exists() }
 
         val fileSystems = mutableSetOf<FileSystem>()
@@ -70,10 +70,13 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
                     fs.getPath("/")
                 }
             }
+
+            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.get())
+
             for (i in toTransform.indices) {
                 val input = toTransform[i]
                 val output = transformed[i]
-                TransformPlatform(platformName.get(), remap.get()).transform(input, output)
+                transformer.transform(input, output)
             }
         } finally {
             fileSystems.forEach { it.close() }

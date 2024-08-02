@@ -5,7 +5,7 @@ package xyz.wagyourtail.unimined.expect.task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
-import org.gradle.jvm.tasks.Jar
+import org.gradle.api.tasks.bundling.Jar
 import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
 import xyz.wagyourtail.unimined.expect.utils.MustSet
 import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
@@ -24,19 +24,17 @@ abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
 
     @TaskAction
     fun doTransform() {
+        val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.get())
         for (input in inputFiles) {
             if (input.isDirectory) {
                 val output = temporaryDir.resolve(input.name + "-expect-platform")
-                TransformPlatform(platformName.get(), remap.get()).transform(input.toPath(), output.toPath())
+                transformer.transform(input.toPath(), output.toPath())
                 from(output)
             } else if (input.extension == "jar") {
                 val output = temporaryDir.resolve(input.nameWithoutExtension + "-expect-platform." + input.extension)
                 input.toPath().openZipFileSystem().use { inputFs ->
                     output.toPath().openZipFileSystem(mapOf("create" to true)).use { outputFs ->
-                        TransformPlatform(platformName.get(), remap.get()).transform(
-                            inputFs.getPath("/"),
-                            outputFs.getPath("/")
-                        )
+                        transformer.transform(inputFs.getPath("/"), outputFs.getPath("/"))
                     }
                 }
                 from(project.zipTree(output))

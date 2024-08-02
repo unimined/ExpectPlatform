@@ -9,6 +9,7 @@ import org.gradle.process.JavaExecSpec
 import org.jetbrains.annotations.VisibleForTesting
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
+import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
 
 abstract class ExpectPlatformExtension(val project: Project) {
 
@@ -17,6 +18,8 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
     val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
     val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version" }
+
+    val stripAnnotations by FinalizeOnRead(false)
 
     @JvmOverloads
     fun platform(platformName: String, configuration: Configuration, action: ExpectPlatformParams.() -> Unit = {}) {
@@ -40,6 +43,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
                 spec.parameters {
                     it.platformName.set(platformName)
+                    it.stripAnnotations.set(stripAnnotations)
                     it.action()
                 }
             }
