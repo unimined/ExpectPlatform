@@ -24,7 +24,7 @@ abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
 
     @TaskAction
     fun doTransform() {
-        val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.get())
+        val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.getOrElse(false))
         for (input in inputFiles) {
             if (input.isDirectory) {
                 val output = temporaryDir.resolve(input.name + "-expect-platform")
@@ -40,7 +40,6 @@ abstract class ExpectPlatformJar : Jar(), ExpectPlatformParams {
                 from(project.zipTree(output))
             } else if (input.exists()) {
                 throw IllegalStateException("ExpectPlatformJar: $input is not a directory or jar file")
-
             }
         }
 

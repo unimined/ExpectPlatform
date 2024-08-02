@@ -52,7 +52,6 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
         val fileSystems = mutableSetOf<FileSystem>()
 
         try {
-
             outputs.files.forEach { it.deleteRecursively() }
 
             val transformed = toTransform.map { temporaryDir.resolve(it.name) }.map {
@@ -71,7 +70,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
                 }
             }
 
-            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.get())
+            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.getOrElse(false))
 
             for (i in toTransform.indices) {
                 val input = toTransform[i]

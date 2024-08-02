@@ -43,7 +43,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
                 spec.parameters {
                     it.platformName.set(platformName)
-                    it.stripAnnotations.set(stripAnnotations)
+                    it.stripAnnotations.convention(stripAnnotations)
                     it.action()
                 }
             }
