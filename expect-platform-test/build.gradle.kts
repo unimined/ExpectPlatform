@@ -1,14 +1,10 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 import xyz.wagyourtail.unimined.expect.task.ExpectPlatformFiles
 import xyz.wagyourtail.unimined.expect.task.ExpectPlatformJar
-import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
-import java.util.*
+import xyz.wagyourtail.unimined.expect.expectPlatform
+import java.util.Properties
 
-val epVersion: String = run {
-    Properties().apply {
-        load(file("../gradle.properties").reader())
-    }.getProperty("version", "1.1.0")
-}
+val epVersion: String = file("../gradle.properties").let { Properties().apply { load(it.reader()) } }.getProperty("version")
 
 buildscript {
     repositories {
@@ -19,7 +15,7 @@ buildscript {
     }
     dependencies {
         if (!project.hasProperty("runningTest")) {
-            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:$epVersion")
+            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:1.1.0")
             classpath("org.ow2.asm:asm:9.7")
             classpath("org.ow2.asm:asm-commons:9.7")
             classpath("org.ow2.asm:asm-tree:9.7")
@@ -30,9 +26,7 @@ buildscript {
 plugins {
     java
     if (project.hasProperty("runningTest")) {
-        plugins {
-            id("xyz.wagyourtail.unimined.expect-platform")
-        }
+        id("xyz.wagyourtail.unimined.expect-platform")
     }
 
 }
@@ -58,13 +52,9 @@ repositories {
     }
 }
 
-val expectPlatform = project.extensions.getByType(ExpectPlatformExtension::class)
-expectPlatform.version = run {
-    projectDir.parentFile.resolve("gradle.properties").inputStream().use {
-        val props = Properties()
-        props.load(it)
-        props.getProperty("version") as String
-    }
+project.expectPlatform {
+    version = epVersion
+    stripAnnotations = true
 }
 
 dependencies {
@@ -85,6 +75,7 @@ val aExpectPlatform by tasks.registering(ExpectPlatformFiles::class) {
 val bExpectPlatform by tasks.registering(ExpectPlatformFiles::class) {
     platformName = "b"
     inputCollection = sourceSets.main.get().output
+    stripAnnotations = false
 
     remap = mapOf(
             "xyz/wagyourtail/unimined/expect/annotation/Environment" to "xyz/wagyourtail/ept/b/OnlyIn",
@@ -104,21 +95,21 @@ val cExpectPlatform by tasks.registering(ExpectPlatformFiles::class) {
     )
 }
 
-tasks.register("runA", JavaExec::class) {
+tasks.register<JavaExec>("runA") {
     dependsOn(aExpectPlatform)
     classpath = sourceSets["a"].runtimeClasspath + aExpectPlatform.get().outputCollection
     mainClass = "xyz.wagyourtail.ept.Main"
     group = "ept"
 }
 
-tasks.register("runB", JavaExec::class) {
+tasks.register<JavaExec>("runB") {
     dependsOn(bExpectPlatform)
     classpath = sourceSets["b"].runtimeClasspath + bExpectPlatform.get().outputCollection
     mainClass = "xyz.wagyourtail.ept.Main"
     group = "ept"
 }
 
-tasks.register("runC", JavaExec::class) {
+tasks.register<JavaExec>("runC") {
     dependsOn(cExpectPlatform)
     classpath = sourceSets["c"].runtimeClasspath + cExpectPlatform.get().outputCollection
     mainClass = "xyz.wagyourtail.ept.Main"
@@ -179,6 +170,7 @@ val jarB by tasks.registering(ExpectPlatformJar::class) {
     inputFiles = sourceSets.main.get().output
     from(sourceSets["b"].output)
     archiveFileName = "b.jar"
+    stripAnnotations = false
 
     remap = mapOf(
             "xyz/wagyourtail/unimined/expect/annotation/Environment" to "xyz/wagyourtail/ept/b/OnlyIn",

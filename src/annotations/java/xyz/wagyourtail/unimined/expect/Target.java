@@ -8,6 +8,6 @@ public final class Target {
 	 * @return the currently targeted platform
 	 */
 	public static String getCurrentTarget() {
-		throw new AssertionError("failed to transform method");
+		throw new AssertionError("stub method, this shouldn't even be on your runtime classpath!");
 	}
 }
