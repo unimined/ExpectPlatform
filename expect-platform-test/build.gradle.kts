@@ -4,6 +4,12 @@ import xyz.wagyourtail.unimined.expect.task.ExpectPlatformJar
 import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
 import java.util.*
 
+val epVersion: String = run {
+    Properties().apply {
+        load(file("../gradle.properties").reader())
+    }.getProperty("version", "1.1.0")
+}
+
 buildscript {
     repositories {
         mavenCentral()
@@ -12,9 +18,8 @@ buildscript {
         }
     }
     dependencies {
-
         if (!project.hasProperty("runningTest")) {
-            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:1.0.3")
+            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:$epVersion")
             classpath("org.ow2.asm:asm:9.7")
             classpath("org.ow2.asm:asm-commons:9.7")
             classpath("org.ow2.asm:asm-tree:9.7")
@@ -34,7 +39,6 @@ plugins {
 
 
 apply(plugin = "xyz.wagyourtail.unimined.expect-platform")
-
 
 sourceSets {
     create("a") {

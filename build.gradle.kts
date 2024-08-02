@@ -70,10 +70,6 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
 tasks.jar {
     from(shared.output)
 
@@ -124,6 +120,11 @@ val agentShadeJar = tasks.register<ShadowJar>("agentShadowJar") {
             "Can-Redefine-Classes" to "true",
         )
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    dependsOn(tasks.jar, annotationJar, agentShadeJar)
 }
 
 tasks.assemble {

@@ -11,6 +11,9 @@ import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
 
+val Project.expectPlatform: ExpectPlatformExtension
+    get() = extensions.getByType(ExpectPlatformExtension::class.java)
+
 abstract class ExpectPlatformExtension(val project: Project) {
 
     @set:VisibleForTesting

@@ -7,8 +7,8 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
 import xyz.wagyourtail.unimined.expect.utils.MustSet
-import xyz.wagyourtail.unimined.expect.ExpectPlatformExtension
 import xyz.wagyourtail.unimined.expect.TransformPlatform
+import xyz.wagyourtail.unimined.expect.expectPlatform
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.utils.openZipFileSystem
 import java.io.File
@@ -18,11 +18,6 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
-
-    @get:Internal
-    protected val ep by lazy {
-        project.extensions.getByType(ExpectPlatformExtension::class.java)
-    }
 
     @get:InputFiles
     var inputCollection: FileCollection by FinalizeOnRead(MustSet())
@@ -70,7 +65,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
                 }
             }
 
-            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.getOrElse(false))
+            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.getOrElse(project.expectPlatform.stripAnnotations))
 
             for (i in toTransform.indices) {
                 val input = toTransform[i]
