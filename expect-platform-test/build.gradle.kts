@@ -2,9 +2,10 @@
 import xyz.wagyourtail.unimined.expect.task.ExpectPlatformFiles
 import xyz.wagyourtail.unimined.expect.task.ExpectPlatformJar
 import xyz.wagyourtail.unimined.expect.expectPlatform
-import java.util.Properties
 
-val epVersion: String = file("../gradle.properties").let { Properties().apply { load(it.reader()) } }.getProperty("version")
+val epVersion = projectDir.parentFile.resolve("gradle.properties").readText()
+    .split("\n").find { it.startsWith("version") }!!
+    .split("=").last().trimStart()
 
 buildscript {
     repositories {
@@ -15,7 +16,10 @@ buildscript {
     }
     dependencies {
         if (!project.hasProperty("runningTest")) {
-            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:1.1.0")
+            val epVersion = projectDir.parentFile.resolve("gradle.properties").readText()
+                .split("\n").find { it.startsWith("version") }!!
+                .split("=").last().trimStart()
+            classpath("xyz.wagyourtail.unimined.expect-platform:expect-platform:${epVersion}")
             classpath("org.ow2.asm:asm:9.7")
             classpath("org.ow2.asm:asm-commons:9.7")
             classpath("org.ow2.asm:asm-tree:9.7")
