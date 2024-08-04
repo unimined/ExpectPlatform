@@ -19,4 +19,8 @@ interface ExpectPlatformParams : TransformParameters {
     @get:Optional
     val remap: MapProperty<String, String>
 
+    @get:Input
+    @get:Optional
+    val stripAnnotations: Property<Boolean>
+
 }

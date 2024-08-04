@@ -9,6 +9,11 @@ import org.gradle.process.JavaExecSpec
 import org.jetbrains.annotations.VisibleForTesting
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
+import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
+import java.io.File
+
+val Project.expectPlatform: ExpectPlatformExtension
+    get() = extensions.getByType(ExpectPlatformExtension::class.java)
 
 abstract class ExpectPlatformExtension(val project: Project) {
 
@@ -17,6 +22,8 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
     val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
     val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version" }
+
+    var stripAnnotations by FinalizeOnRead(false)
 
     @JvmOverloads
     fun platform(platformName: String, configuration: Configuration, action: ExpectPlatformParams.() -> Unit = {}) {
@@ -40,6 +47,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
                 spec.parameters {
                     it.platformName.set(platformName)
+                    it.stripAnnotations.convention(stripAnnotations)
                     it.action()
                 }
             }
@@ -67,12 +75,20 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
     @JvmOverloads
     fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
-        spec.jvmArgs("-javaagent:${agentJar.absolutePath}", "-Dexpect.platform=${platformName}", "-Dexpect.remap=${TransformPlatform.mapToString(remap)}")
+        spec.jvmArgs(
+            "-javaagent:${agentJar.absolutePath}",
+            "-Dexpect.platform=${platformName}",
+            "-Dexpect.remap=${TransformPlatform.mapToString(remap)}"
+        )
     }
 
-    val agentJar by lazy {
+    val agentJar: File by lazy {
         val config = project.configurations.detachedConfiguration(project.dependencies.create(agentDep))
         config.resolve().first { it.extension == "jar" }
+    }
+
+    operator fun invoke(action: ExpectPlatformExtension.() -> Unit) {
+        action(this)
     }
 
 }

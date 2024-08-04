@@ -14,6 +14,7 @@ public @interface PlatformOnly {
 	String[] value();
 
 	String FORGE = "forge";
+	String NEOFORGE = "neoforge";
 	String FABRIC = "fabric";
 	String QUIILT = "quilt";
 }

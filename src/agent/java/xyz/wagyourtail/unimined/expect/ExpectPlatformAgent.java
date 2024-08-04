@@ -14,14 +14,20 @@ public class ExpectPlatformAgent {
     private static final String platform = System.getProperty(EXPECT_PLATFORM);
     private static final String remap = System.getProperty(REMAP);
 
-    private static final TransformPlatform transformPlatform = new TransformPlatform(platform, remap);
+    private static final TransformPlatform transformPlatform = new TransformPlatform(platform, remap, false);
 
     public static void premain(String args, Instrumentation inst) {
-        System.out.println("[ExpectPlatformAgent] Platform: " + platform);
-        System.out.println("[ExpectPlatformAgent] Remap: " + transformPlatform.getRemap());
         if (platform == null) {
             throw new IllegalStateException("-D" + EXPECT_PLATFORM + " not set");
         }
+
+        if(!inst.isRetransformClassesSupported()) {
+            System.out.println("[ExpectPlatformAgent] ur instrumentation is bad lol");
+        }
+
+        System.out.println("[ExpectPlatformAgent] Platform: " + platform);
+        System.out.println("[ExpectPlatformAgent] Remap: " + transformPlatform.getRemap());
+
         inst.addTransformer(new ExpectPlatformTransformer(), inst.isRetransformClassesSupported());
     }
 
@@ -33,6 +39,7 @@ public class ExpectPlatformAgent {
 
         @Override
         public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+            System.out.println("[ExpectPlatformAgent] Transforming: " + className);
             ClassReader reader = new ClassReader(classfileBuffer);
             ClassNode classNode = new ClassNode();
             reader.accept(classNode, 0);

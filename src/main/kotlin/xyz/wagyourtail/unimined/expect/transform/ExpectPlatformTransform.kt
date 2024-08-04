@@ -16,15 +16,17 @@ abstract class ExpectPlatformTransform : TransformAction<ExpectPlatformParams> {
     override fun transform(outputs: TransformOutputs) {
         val platformName = parameters.platformName.get()
         val remap = parameters.remap.get()
+        val transformer = TransformPlatform(platformName, remap, parameters.stripAnnotations.get())
+
         val input = inputArtifact.get().asFile
         if (input.isDirectory) {
             val output = outputs.dir(input.name + "-expect-platform")
-            TransformPlatform(platformName, remap).transform(input.toPath(), output.toPath())
+            transformer.transform(input.toPath(), output.toPath())
         } else if (input.extension == "jar") {
             val output = outputs.file(input.nameWithoutExtension + "-expect-platform." + input.extension)
             input.toPath().openZipFileSystem().use { inputFs ->
                 output.toPath().openZipFileSystem(mapOf("create" to true)).use { outputFs ->
-                    TransformPlatform(platformName, remap).transform(inputFs.getPath("/"), outputFs.getPath("/"))
+                    transformer.transform(inputFs.getPath("/"), outputFs.getPath("/"))
                 }
             }
         } else {

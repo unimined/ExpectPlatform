@@ -17,16 +17,26 @@ import java.util.stream.Stream;
 public class TransformPlatform {
     private static final int EXPECT_PLATFORM_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
 
+    private static final String EXPECT_PLATFORM_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;";
+    private static final String EXPECT_PLATFORM_TRANSFORMED_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform$Transformed";
+    private static final String PLATFORM_ONLY_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;";
+    private static final String TARGET_CLASS = "xyz/wagyourtail/unimined/expect/Target";
+    private static final String TARGET_METHOD = "getCurrentTarget";
+
+
     private final String platformName;
+    private final boolean stripAnnotations;
     private final Map<String, String> remap = new HashMap<>();
 
-    public TransformPlatform(String platformName, String map) {
+    public TransformPlatform(String platformName, String map, boolean stripAnnotations) {
         this.platformName = platformName;
+        this.stripAnnotations = stripAnnotations;
         stringMapParser(map);
     }
 
-    public TransformPlatform(String platformName, Map<String, String> map) {
+    public TransformPlatform(String platformName, Map<String, String> map, boolean stripAnnotations) {
         this.platformName = platformName;
+        this.stripAnnotations = stripAnnotations;
         remap.putAll(map);
     }
 
@@ -80,20 +90,30 @@ public class TransformPlatform {
         for (MethodNode method : classNode.methods) {
             if (method.invisibleAnnotations == null) continue;
             for (AnnotationNode annotation : method.invisibleAnnotations) {
-                if (annotation.desc.equals("Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;")) {
+                if (annotation.desc.equals(EXPECT_PLATFORM_DESC)) {
                     expectPlatform.put(method, annotation);
-                } else if (annotation.desc.equals("Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;")) {
+                } else if (annotation.desc.equals(PLATFORM_ONLY_DESC)) {
                     platformOnly.put(method, annotation);
                 }
             }
         }
 
         for (Map.Entry<MethodNode, AnnotationNode> entry : expectPlatform.entrySet()) {
-            expectPlatform(entry.getKey(), classNode, entry.getValue());
+            MethodNode method = entry.getKey();
+            AnnotationNode annotation = entry.getValue();
+            expectPlatform(method, classNode, annotation);
+            if (stripAnnotations) {
+                method.invisibleAnnotations.remove(annotation);
+            }
         }
 
         for (Map.Entry<MethodNode, AnnotationNode> entry : platformOnly.entrySet()) {
-            platformOnly(entry.getKey(), classNode, entry.getValue());
+            MethodNode method = entry.getKey();
+            AnnotationNode annotation = entry.getValue();
+            platformOnly(method, classNode, annotation);
+            if (stripAnnotations) {
+                method.invisibleAnnotations.remove(annotation);
+            }
         }
 
         getCurrentTarget(classNode);
@@ -105,7 +125,6 @@ public class TransformPlatform {
         if ((methodNode.access & EXPECT_PLATFORM_ACCESS) != EXPECT_PLATFORM_ACCESS) {
             throw new RuntimeException("ExpectPlatform methods must be public and static");
         }
-
 
         String platformClass = null;
         List<AnnotationNode> platforms = getAnnotationValue(annotationNode, "platforms");
@@ -130,13 +149,8 @@ public class TransformPlatform {
         }
         if (platformClass == null) {
             int lastSlash = classNode.name.lastIndexOf('/');
-            String pkg;
-            if (lastSlash == -1) {
-                pkg = "";
-            } else {
-                pkg = classNode.name.substring(0, lastSlash);
-            }
-            String className = classNode.name.substring(lastSlash + 1);
+            String pkg = lastSlash == -1 ? "" : classNode.name.substring(0, lastSlash);
+			String className = classNode.name.substring(lastSlash + 1);
             if (pkg.isEmpty()) {
                 platformClass = platformName + "/" + className + "Impl";
             } else {
@@ -167,6 +181,10 @@ public class TransformPlatform {
         // recalculate proper maxStack and maxLocals manually so we don't have to recompute anything
         methodNode.maxStack = Math.max(type.getReturnType().getSize(), stackIndex);
         methodNode.maxLocals = stackIndex;
+
+        if(!stripAnnotations) {
+            methodNode.invisibleAnnotations.add(new AnnotationNode(EXPECT_PLATFORM_TRANSFORMED_DESC));
+        }
     }
 
     private void platformOnly(MethodNode methodNode, ClassNode classNode, AnnotationNode annotationNode) {
@@ -186,9 +204,7 @@ public class TransformPlatform {
                 AbstractInsnNode insnNode = iterator.next();
                 if (insnNode.getOpcode() == Opcodes.INVOKESTATIC) {
                     MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
-                    if (methodInsnNode.owner.equals("xyz/wagyourtail/unimined/expect/Target") &&
-                        methodInsnNode.name.equals("getCurrentTarget")
-                    ) {
+                    if (methodInsnNode.owner.equals(TARGET_CLASS) && methodInsnNode.name.equals(TARGET_METHOD)) {
                         iterator.set(new LdcInsnNode(platformName));
                     }
                 }
