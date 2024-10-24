@@ -40,7 +40,7 @@ dependencies {
 to then apply the annotations in a subproject or other module, you can either do:
 
 ```gradle
-tasks.create("expectPlatformOutput") {
+tasks.create("expectPlatformOutput", xyz.wagyourtail.unimined.expect.ExpectPlatformFiles) {
     group = "unimined"
     platformName = platformName
     inputCollection = rootProject.sourceSets["main"].output
