@@ -21,7 +21,7 @@ abstract class ExpectPlatformExtension(val project: Project) {
     var version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
 
     val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
-    val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version" }
+    val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version:all" }
 
     var stripAnnotations by FinalizeOnRead(false)
 

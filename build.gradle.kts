@@ -1,10 +1,11 @@
 @file:Suppress("HasPlatformType")
 
-import xyz.wagyourtail.gradle.shadow.ShadowJar
+import xyz.wagyourtail.commons.gradle.shadow.ShadowJar
 import java.net.URI
 
 plugins {
     kotlin("jvm") version "1.9.22"
+    id("xyz.wagyourtail.commons-gradle") version "1.0.4-SNAPSHOT"
     `java-gradle-plugin`
     `maven-publish`
 }
