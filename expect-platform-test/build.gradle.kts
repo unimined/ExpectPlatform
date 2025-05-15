@@ -9,10 +9,8 @@ val epVersion = projectDir.parentFile.resolve("gradle.properties").readText()
 
 buildscript {
     repositories {
+        flatDir { dirs("../build/libs") }
         mavenCentral()
-        flatDir {
-            dirs("../build/libs")
-        }
     }
     dependencies {
         if (!project.hasProperty("runningTest")) {
@@ -32,9 +30,7 @@ plugins {
     if (project.hasProperty("runningTest")) {
         id("xyz.wagyourtail.unimined.expect-platform")
     }
-
 }
-
 
 apply(plugin = "xyz.wagyourtail.unimined.expect-platform")
 
@@ -51,6 +47,7 @@ sourceSets {
 }
 
 repositories {
+    mavenLocal()
     flatDir {
         dirs("../build/libs")
     }
@@ -200,5 +197,4 @@ tasks.assemble {
     dependsOn(jarA)
     dependsOn(jarB)
     dependsOn(jarC)
-
 }

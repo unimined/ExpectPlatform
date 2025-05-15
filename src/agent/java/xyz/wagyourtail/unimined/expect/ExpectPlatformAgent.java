@@ -39,7 +39,6 @@ public class ExpectPlatformAgent {
 
         @Override
         public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-            System.out.println("[ExpectPlatformAgent] Transforming: " + className);
             ClassReader reader = new ClassReader(classfileBuffer);
             ClassNode classNode = new ClassNode();
             reader.accept(classNode, 0);

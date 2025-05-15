@@ -40,6 +40,10 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
         outputs.files
     }
 
+    init {
+        stripAnnotations.convention(project.expectPlatform.stripAnnotations)
+    }
+
     @TaskAction
     fun doTransform() {
         var toTransform = inputCollection.map { it.toPath() }.filter { it.exists() }
@@ -65,7 +69,7 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
                 }
             }
 
-            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.getOrElse(project.expectPlatform.stripAnnotations))
+            val transformer = TransformPlatform(platformName.get(), remap.get(), stripAnnotations.get())
 
             for (i in toTransform.indices) {
                 val input = toTransform[i]
@@ -75,10 +79,6 @@ abstract class ExpectPlatformFiles : ConventionTask(), ExpectPlatformParams {
         } finally {
             fileSystems.forEach { it.close() }
         }
-    }
-
-    fun forInputs(files: Set<File>): FileCollection {
-        return project.files(outputMap.filterKeys { it in files }.values)
     }
 
 }
