@@ -7,6 +7,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.process.JavaExecSpec
 import org.jetbrains.annotations.VisibleForTesting
+import xyz.wagyourtail.unimined.expect.TransformPlatform.*
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformParams
 import xyz.wagyourtail.unimined.expect.transform.ExpectPlatformTransform
 import xyz.wagyourtail.unimined.expect.utils.FinalizeOnRead
@@ -18,7 +19,7 @@ val Project.expectPlatform: ExpectPlatformExtension
 abstract class ExpectPlatformExtension(val project: Project) {
 
     @set:VisibleForTesting
-    var version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.0.0-SNAPSHOT"
+    var version = ExpectPlatformExtension::class.java.`package`.implementationVersion ?: "1.1.0-SNAPSHOT"
 
     val annotationsDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-annotations:$version" }
     val agentDep by lazy { "xyz.wagyourtail.unimined.expect-platform:expect-platform-agent:$version:all" }
@@ -75,10 +76,15 @@ abstract class ExpectPlatformExtension(val project: Project) {
 
     @JvmOverloads
     fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
-        spec.jvmArgs(
+        spec.jvmArgs(getAgentArgs(platformName, remap))
+    }
+
+    @JvmOverloads
+    fun getAgentArgs(platformName: String, remap: Map<String, String> = emptyMap()): List<String> {
+        return listOf(
             "-javaagent:${agentJar.absolutePath}",
-            "-Dexpect.platform=${platformName}",
-            "-Dexpect.remap=${TransformPlatform.mapToString(remap)}"
+            "-D${PROPERTY_PLATFORM}=${platformName}",
+            "-D${PROPERTY_REMAP}=${mapToString(remap)}"
         )
     }
 
@@ -87,8 +93,6 @@ abstract class ExpectPlatformExtension(val project: Project) {
         config.resolve().first { it.extension == "jar" }
     }
 
-    operator fun invoke(action: ExpectPlatformExtension.() -> Unit) {
-        action(this)
-    }
+    operator fun invoke(action: ExpectPlatformExtension.() -> Unit) = action(this)
 
 }

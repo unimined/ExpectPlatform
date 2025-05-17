@@ -122,7 +122,7 @@ tasks.register("runAgentA", JavaExec::class) {
     mainClass = "xyz.wagyourtail.ept.Main"
     group = "ept"
 
-    expectPlatform.insertAgent(this, "a", mapOf(
+    expectPlatform.insertAgent(this,"a", mapOf(
                     "xyz/wagyourtail/unimined/expect/annotation/Environment" to "xyz/wagyourtail/ept/a/Env",
                     "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType" to "xyz/wagyourtail/ept/a/Env\$EnvType",
                     "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType.COMBINED" to "JOINED",
@@ -134,11 +134,11 @@ tasks.register("runAgentB", JavaExec::class) {
     mainClass = "xyz.wagyourtail.ept.Main"
     group = "ept"
 
-    expectPlatform.insertAgent(this, "b", mapOf(
+    expectPlatform.insertAgent(this,"b", mapOf(
                     "xyz/wagyourtail/unimined/expect/annotation/Environment" to "xyz/wagyourtail/ept/b/OnlyIn",
                     "xyz/wagyourtail/unimined/expect/annotation/Environment.value" to "env",
                     "xyz/wagyourtail/unimined/expect/annotation/Environment\$EnvType" to "xyz/wagyourtail/ept/b/OnlyIn\$Type",
-            ))
+    ))
 }
 
 tasks.register("runAgentC", JavaExec::class) {
@@ -150,7 +150,7 @@ tasks.register("runAgentC", JavaExec::class) {
                     "xyz/wagyourtail/unimined/expect/annotation/Environment" to "xyz/wagyourtail/ept/c/Environment",
                     "xyz/wagyourtail/expect/unimined/annotation/Environment.value" to "type",
                     "xyz/wagyourtail/expect/unimined/annotation/Environment\$EnvType" to "xyz/wagyourtail/ept/c/Environment\$EnvType",
-            ))
+    ))
 }
 
 val jarA by tasks.registering(ExpectPlatformJar::class) {

@@ -68,8 +68,8 @@ tasks.create("PlatformJar", xyz.wagyourtail.unimined.expect.ExpectPlatformJar) {
 
 ```
 
-if you need the agent on a runner that isn't implementing JavaExecSpec (i.e. the one in unimined 1.2)
-check [the implementation](src/main/kotlin/xyz/wagyourtail/unimined/expect/ExpectPlatformExtension.kt#L69) for how it actually applies the agent to a JavaExec task.
+if you need the agent on a runner that isn't implementing JavaExecSpec (i.e. the one in unimined 1.2), call
+`expectPlatform.getAgentArgs(platformName)` to get the args to pass to the jvm.
 
 ### Environment
 
