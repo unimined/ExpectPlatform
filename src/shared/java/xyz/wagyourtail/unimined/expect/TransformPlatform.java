@@ -17,6 +17,9 @@ import java.util.stream.Stream;
 public class TransformPlatform {
     private static final int EXPECT_PLATFORM_ACCESS = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
 
+    public static final String PROPERTY_PLATFORM = "expect.platform";
+    public static final String PROPERTY_REMAP = "expect.remap";
+
     private static final String EXPECT_PLATFORM_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;";
     private static final String EXPECT_PLATFORM_TRANSFORMED_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform$Transformed";
     private static final String PLATFORM_ONLY_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;";

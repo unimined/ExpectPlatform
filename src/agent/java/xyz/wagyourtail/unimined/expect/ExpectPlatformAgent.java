@@ -8,19 +8,27 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
+import static xyz.wagyourtail.unimined.expect.TransformPlatform.PROPERTY_PLATFORM;
+import static xyz.wagyourtail.unimined.expect.TransformPlatform.PROPERTY_REMAP;
+
+
 public class ExpectPlatformAgent {
-    private static final String EXPECT_PLATFORM = "expect.platform";
-    private static final String REMAP = "expect.remap";
-    private static final String platform = System.getProperty(EXPECT_PLATFORM);
-    private static final String remap = System.getProperty(REMAP);
+    private static final String platform = System.getProperty(PROPERTY_PLATFORM);
+    private static final String remap = System.getProperty(PROPERTY_REMAP);
+
+    static {
+        if (platform == null) {
+            throw new IllegalStateException("-D" + PROPERTY_PLATFORM + " not set");
+        }
+
+        if (remap == null) {
+            throw new IllegalStateException("-D" + PROPERTY_REMAP + " not set");
+        }
+    }
 
     private static final TransformPlatform transformPlatform = new TransformPlatform(platform, remap, false);
 
     public static void premain(String args, Instrumentation inst) {
-        if (platform == null) {
-            throw new IllegalStateException("-D" + EXPECT_PLATFORM + " not set");
-        }
-
         if(!inst.isRetransformClassesSupported()) {
             System.out.println("[ExpectPlatformAgent] ur instrumentation is bad lol");
         }
