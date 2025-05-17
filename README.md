@@ -24,7 +24,7 @@ pluginManagement {
 and then add the plugin to your `build.gradle` file:
 ```gradle
 plugins {
-    id 'xyz.wagyourtail.unimined.expect-platform' version '1.0.5'
+    id 'xyz.wagyourtail.unimined.expect-platform' version '1.1.1'
 }
 ```
 
