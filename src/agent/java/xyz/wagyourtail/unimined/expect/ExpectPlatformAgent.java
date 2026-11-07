@@ -10,11 +10,13 @@ import java.security.ProtectionDomain;
 
 import static xyz.wagyourtail.unimined.expect.TransformPlatform.PROPERTY_PLATFORM;
 import static xyz.wagyourtail.unimined.expect.TransformPlatform.PROPERTY_REMAP;
+import static xyz.wagyourtail.unimined.expect.TransformPlatform.PROPERTY_SIDE;
 
 
 public class ExpectPlatformAgent {
     private static final String platform = System.getProperty(PROPERTY_PLATFORM);
     private static final String remap = System.getProperty(PROPERTY_REMAP);
+    private static final String side = System.getProperty(PROPERTY_SIDE);
 
     static {
         if (platform == null) {
@@ -26,7 +28,7 @@ public class ExpectPlatformAgent {
         }
     }
 
-    private static final TransformPlatform transformPlatform = new TransformPlatform(platform, remap, false);
+    private static final TransformPlatform transformPlatform = new TransformPlatform(platform, remap, false, side);
 
     public static void premain(String args, Instrumentation inst) {
         if(!inst.isRetransformClassesSupported()) {
@@ -34,6 +36,7 @@ public class ExpectPlatformAgent {
         }
 
         System.out.println("[ExpectPlatformAgent] Platform: " + platform);
+        System.out.println("[ExpectPlatformAgent] Side: " + side);
         System.out.println("[ExpectPlatformAgent] Remap: " + transformPlatform.getRemap());
 
         inst.addTransformer(new ExpectPlatformTransformer(), inst.isRetransformClassesSupported());

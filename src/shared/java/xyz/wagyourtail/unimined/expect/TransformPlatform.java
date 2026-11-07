@@ -19,26 +19,39 @@ public class TransformPlatform {
 
     public static final String PROPERTY_PLATFORM = "expect.platform";
     public static final String PROPERTY_REMAP = "expect.remap";
+    public static final String PROPERTY_SIDE = "expect.side";
 
     private static final String EXPECT_PLATFORM_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform;";
     private static final String EXPECT_PLATFORM_TRANSFORMED_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/ExpectPlatform$Transformed";
     private static final String PLATFORM_ONLY_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/PlatformOnly;";
+    private static final String ENVIRONMENT_DESC = "Lxyz/wagyourtail/unimined/expect/annotation/Environment;";
     private static final String TARGET_CLASS = "xyz/wagyourtail/unimined/expect/Target";
     private static final String TARGET_METHOD = "getCurrentTarget";
 
 
     private final String platformName;
+    private final String environment;
     private final boolean stripAnnotations;
     private final Map<String, String> remap = new HashMap<>();
 
     public TransformPlatform(String platformName, String map, boolean stripAnnotations) {
+        this(platformName, map, stripAnnotations, null);
+    }
+
+    public TransformPlatform(String platformName, String map, boolean stripAnnotations, String environment) {
         this.platformName = platformName;
+        this.environment = environment == null ? null : environment.toUpperCase(Locale.ROOT);
         this.stripAnnotations = stripAnnotations;
         stringMapParser(map);
     }
 
     public TransformPlatform(String platformName, Map<String, String> map, boolean stripAnnotations) {
+        this(platformName, map, stripAnnotations, null);
+    }
+
+    public TransformPlatform(String platformName, Map<String, String> map, boolean stripAnnotations, String environment) {
         this.platformName = platformName;
+        this.environment = environment == null ? null : environment.toUpperCase(Locale.ROOT);
         this.stripAnnotations = stripAnnotations;
         remap.putAll(map);
     }
@@ -80,6 +93,13 @@ public class TransformPlatform {
     }
 
     public ClassNode transform(ClassNode classNode) {
+        // side-stripping reads expect's own @Environment, so it must
+        // run before the remap pass which can rewrite the annotation
+        // into the loader's env annotation
+        if (environment != null) {
+            environmentStrip(classNode);
+        }
+
         Map<MethodNode, AnnotationNode> expectPlatform = new HashMap<>();
         Map<MethodNode, AnnotationNode> platformOnly = new HashMap<>();
 
@@ -198,6 +218,43 @@ public class TransformPlatform {
         }
     }
 
+    /**
+     * Removes members/classes marked with expect's own
+     * {@code @Environment} for a different side than we're running
+     * on. Loaders can't do this for us in dev — they scan raw
+     * on-disk bytes via ASM, before the agent's transform output
+     * is visible — so the agent strips directly at transform time.
+     * A wrong-side <em>type</em> can't be prevented from loading,
+     * so it is emptied instead: any accidental link to it then
+     * fails the same way the physically-absent prod case does.
+     */
+    private void environmentStrip(ClassNode classNode) {
+        if (isWrongSide(classNode.visibleAnnotations) || isWrongSide(classNode.invisibleAnnotations)) {
+            classNode.methods.clear();
+            classNode.fields.clear();
+            return;
+        }
+        if (classNode.methods != null) {
+            classNode.methods.removeIf(m -> isWrongSide(m.visibleAnnotations) || isWrongSide(m.invisibleAnnotations));
+        }
+        if (classNode.fields != null) {
+            classNode.fields.removeIf(f -> isWrongSide(f.visibleAnnotations) || isWrongSide(f.invisibleAnnotations));
+        }
+    }
+
+    /** @return whether the annotation list marks this for a side other than {@link #environment}. */
+    private boolean isWrongSide(List<AnnotationNode> annotations) {
+        if (annotations == null) return false;
+        for (AnnotationNode annotation : annotations) {
+            if (!annotation.desc.equals(ENVIRONMENT_DESC)) continue;
+            String[] env = getAnnotationValue(annotation, "value");
+            if (env == null) return false;
+            String value = env[1];
+            return !value.equals("COMBINED") && !value.equals(environment);
+        }
+        return false;
+    }
+
     private void getCurrentTarget(ClassNode classNode) {
         for (MethodNode methodNode : classNode.methods) {
             InsnList instructions = methodNode.instructions;
@@ -216,7 +273,7 @@ public class TransformPlatform {
     }
 
     private void stringMapParser(String str) {
-        if (str.isEmpty()) return;
+        if (str == null || str.isEmpty()) return;
         String[] split = str.split(";[=|];");
         for (int i = 0; i < split.length; i += 2) {
             remap.put(split[i], split[i + 1]);

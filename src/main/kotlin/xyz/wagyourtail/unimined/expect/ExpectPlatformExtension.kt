@@ -74,18 +74,29 @@ abstract class ExpectPlatformExtension(val project: Project) {
         }
     }
 
+    /**
+     * Adds the expect-platform agent to a java exec spec.
+     * [side] — `client`/`server` — enables agent-side stripping of
+     * [xyz.wagyourtail.unimined.expect.annotation.Environment]
+     * members for the other side; needed in dev because loaders
+     * read env annotations off raw bytes, before agent transforms.
+     */
     @JvmOverloads
-    fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap()) {
-        spec.jvmArgs(getAgentArgs(platformName, remap))
+    fun insertAgent(spec: JavaExecSpec, platformName: String, remap: Map<String, String> = emptyMap(), side: String? = null) {
+        spec.jvmArgs(getAgentArgs(platformName, remap, side))
     }
 
     @JvmOverloads
-    fun getAgentArgs(platformName: String, remap: Map<String, String> = emptyMap()): List<String> {
-        return listOf(
+    fun getAgentArgs(platformName: String, remap: Map<String, String> = emptyMap(), side: String? = null): List<String> {
+        val args = mutableListOf(
             "-javaagent:${agentJar.absolutePath}",
             "-D${PROPERTY_PLATFORM}=${platformName}",
             "-D${PROPERTY_REMAP}=${mapToString(remap)}"
         )
+        if (side != null) {
+            args += "-D${PROPERTY_SIDE}=${side}"
+        }
+        return args
     }
 
     val agentJar: File by lazy {
